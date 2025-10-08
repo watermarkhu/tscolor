@@ -1,0 +1,16 @@
+{
+  "name": "forest",
+  "description": "Earth-toned forest theme with greens and browns",
+  "colors": {
+    "comment": "#7c6f64",
+    "string": "#8ec07c",
+    "number": "#d3869b",
+    "keyword": "#fb4934",
+    "function": "#fabd2f",
+    "type": "#8ec07c",
+    "variable": "#ebdbb2",
+    "operator": "#fe8019",
+    "constant": "#d3869b",
+    "property": "#83a598"
+  }
+}

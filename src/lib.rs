@@ -1,10 +1,11 @@
 use pyo3::prelude::*;
 
-mod theme;
-mod highlighter;
-mod languages;
+pub mod theme;
+pub mod highlighter;
+pub mod languages;
+pub mod language_detection;
 
-use theme::get_theme;
+use theme::{get_theme, get_available_themes as theme_get_available_themes};
 use highlighter::{Highlighter, format_terminal, format_html};
 use languages::{init_languages, available_languages};
 
@@ -66,7 +67,24 @@ fn get_available_languages() -> PyResult<Vec<String>> {
 /// List of theme names
 #[pyfunction]
 fn get_available_themes() -> PyResult<Vec<String>> {
-    Ok(vec!["dark".to_string(), "light".to_string()])
+    Ok(theme_get_available_themes())
+}
+
+/// Detect programming language from file extension
+///
+/// # Arguments
+///
+/// * `file_path` - Path to the file
+///
+/// # Returns
+///
+/// Detected language name, or None if not recognized
+#[pyfunction]
+fn detect_language(file_path: &str) -> PyResult<Option<String>> {
+    use std::path::Path;
+    
+    let path = Path::new(file_path);
+    Ok(language_detection::detect_language(path))
 }
 
 /// A Python module for syntax highlighting using tree-sitter.
@@ -75,5 +93,6 @@ fn tscolor(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(highlight, m)?)?;
     m.add_function(wrap_pyfunction!(get_available_languages, m)?)?;
     m.add_function(wrap_pyfunction!(get_available_themes, m)?)?;
+    m.add_function(wrap_pyfunction!(detect_language, m)?)?;
     Ok(())
 }

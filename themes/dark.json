@@ -1,0 +1,16 @@
+{
+  "name": "dark",
+  "description": "Dark theme optimized for dark terminal backgrounds",
+  "colors": {
+    "comment": "#808080",
+    "string": "#98c379",
+    "number": "#d19a66",
+    "keyword": "#c678dd",
+    "function": "#61afef",
+    "type": "#e5c07b",
+    "variable": "#e06c75",
+    "operator": "#56b6c2",
+    "constant": "#d19a66",
+    "property": "#e06c75"
+  }
+}

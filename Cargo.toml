@@ -8,10 +8,17 @@ edition = "2021"
 name = "tscolor"
 crate-type = ["cdylib"]
 
+[[bin]]
+name = "tscolor"
+path = "src/main.rs"
+
 [dependencies]
 pyo3 = { version = "0.25.0", features = ["extension-module"] }
 tree-sitter = "0.24"
 tree-sitter-highlight = "0.24"
+clap = { version = "4.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 # Optional language grammars
 tree-sitter-python = { version = "0.23", optional = true }
@@ -20,7 +27,7 @@ tree-sitter-javascript = { version = "0.23", optional = true }
 tree-sitter-json = { version = "0.24", optional = true }
 
 [features]
-default = []
+default = ["all-languages"]
 python = ["tree-sitter-python"]
 rust = ["tree-sitter-rust"]
 javascript = ["tree-sitter-javascript"]

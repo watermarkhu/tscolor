@@ -15,11 +15,18 @@ description = "Syntax highlighting library based on tree-sitter"
 readme = "README.md"
 license = { text = "BSD-3-Clause" }
 
-[project.optional-dependencies]
-python = []
-rust = []
-javascript = []
-json = []
-all-languages = []
+[project.scripts]
+tscolor = "tscolor.cli:main"
 
 [tool.maturin]
+features = ["pyo3/extension-module", "all-languages"]
+include = [
+    { path = "themes/*", format = "wheel" }
+]
+python-source = "python"
+bindings = "pyo3"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]

@@ -1,0 +1,16 @@
+{
+  "name": "ocean",
+  "description": "Ocean-inspired theme with blue and teal colors",
+  "colors": {
+    "comment": "#6c7d8f",
+    "string": "#4ec9b0",
+    "number": "#b4d7ff",
+    "keyword": "#569cd6",
+    "function": "#9cdcfe",
+    "type": "#4ec9b0",
+    "variable": "#ffffff",
+    "operator": "#d4d4d4",
+    "constant": "#b4d7ff",
+    "property": "#9cdcfe"
+  }
+}

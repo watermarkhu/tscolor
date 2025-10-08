@@ -1,0 +1,16 @@
+{
+  "name": "light",
+  "description": "Light theme optimized for light backgrounds",
+  "colors": {
+    "comment": "#a0a0a0",
+    "string": "#50a14f",
+    "number": "#986801",
+    "keyword": "#a626a4",
+    "function": "#0054a6",
+    "type": "#987618",
+    "variable": "#981822",
+    "operator": "#008080",
+    "constant": "#986801",
+    "property": "#981822"
+  }
+}
