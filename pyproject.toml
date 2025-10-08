@@ -1,0 +1,25 @@
+[build-system]
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "tscolor"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+description = "Syntax highlighting library based on tree-sitter"
+readme = "README.md"
+license = { text = "BSD-3-Clause" }
+
+[project.optional-dependencies]
+python = []
+rust = []
+javascript = []
+json = []
+all-languages = []
+
+[tool.maturin]

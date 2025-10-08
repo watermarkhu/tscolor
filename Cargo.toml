@@ -1,0 +1,28 @@
+[package]
+name = "tscolor"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "tscolor"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.25.0", features = ["extension-module"] }
+tree-sitter = "0.24"
+tree-sitter-highlight = "0.24"
+
+# Optional language grammars
+tree-sitter-python = { version = "0.23", optional = true }
+tree-sitter-rust = { version = "0.23", optional = true }
+tree-sitter-javascript = { version = "0.23", optional = true }
+tree-sitter-json = { version = "0.24", optional = true }
+
+[features]
+default = []
+python = ["tree-sitter-python"]
+rust = ["tree-sitter-rust"]
+javascript = ["tree-sitter-javascript"]
+json = ["tree-sitter-json"]
+all-languages = ["python", "rust", "javascript", "json"]
