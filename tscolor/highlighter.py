@@ -58,7 +58,7 @@ class HighlighterV2:
             HighlightEvent objects describing how to highlight the source
         """
         # Set the parser language
-        self.parser.set_language(config.language)
+        self.parser.language = config.language
 
         # Parse the source code
         tree = self.parser.parse(source)
@@ -105,29 +105,33 @@ class HighlighterV2:
         if not config.injections_query:
             return layers
 
-        # Execute injection query
-        captures = config.injections_query.captures(tree.root_node)
+        # Execute injection query using QueryCursor
+        cursor = tree_sitter.QueryCursor(config.injections_query)
+        matches = cursor.matches(tree.root_node)
 
         # Group captures by language
         language_ranges: Dict[str, List[Tuple[int, int]]] = {}
 
-        for node, capture_name in captures:
-            # Look for injection.language captures
-            if capture_name == "injection.language":
-                lang_name = node.text.decode("utf-8", errors="replace")
-                if lang_name in self._injection_configs:
-                    if lang_name not in language_ranges:
-                        language_ranges[lang_name] = []
+        # Convert matches to (node, capture_name) tuples and process
+        for pattern_index, captures_dict in matches:
+            for capture_name, nodes in captures_dict.items():
+                for node in nodes:
+                    # Look for injection.language captures
+                    if capture_name == "injection.language":
+                        lang_name = node.text.decode("utf-8", errors="replace")
+                        if lang_name in self._injection_configs:
+                            if lang_name not in language_ranges:
+                                language_ranges[lang_name] = []
 
-            # Look for injection.content captures
-            elif capture_name == "injection.content":
-                # Find which language this belongs to
-                # For simplicity, we'll use the most recently seen language
-                # A more sophisticated approach would match them by pattern
-                for lang_name in language_ranges:
-                    language_ranges[lang_name].append(
-                        (node.start_byte, node.end_byte)
-                    )
+                    # Look for injection.content captures
+                    elif capture_name == "injection.content":
+                        # Find which language this belongs to
+                        # For simplicity, we'll use the most recently seen language
+                        # A more sophisticated approach would match them by pattern
+                        for lang_name in language_ranges:
+                            language_ranges[lang_name].append(
+                                (node.start_byte, node.end_byte)
+                            )
 
         # Create layers for each injected language
         for lang_name, ranges in language_ranges.items():
@@ -135,7 +139,7 @@ class HighlighterV2:
                 inj_config = self._injection_configs[lang_name]
 
                 # Parse the injected content
-                self.parser.set_language(inj_config.language)
+                self.parser.language = inj_config.language
 
                 # For each range, create a layer
                 for start, end in ranges:

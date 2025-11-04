@@ -1,9 +1,8 @@
-"""Command-line interface for TSColor using Click."""
+"""Command-line interface for TSColor using argparse."""
 import sys
+import argparse
 from pathlib import Path
 from typing import Optional, Dict
-
-import click
 
 from . import Highlighter, get_theme, list_themes, __version__
 from .languages import register_language, get_configuration
@@ -97,132 +96,12 @@ def load_language_parser(language: str) -> bool:
     try:
         # Dynamically import the language module
         module = __import__(package_name, fromlist=["language"])
-        lang_obj = module.language()
-        register_language(language, lang_obj)
+        lang_capsule = module.language()
+        # Register will handle wrapping the capsule in Language
+        register_language(language, lang_capsule)
         return True
     except ImportError:
         return False
-
-
-@click.group(invoke_without_command=True)
-@click.argument("file", type=click.Path(exists=True, path_type=Path), required=False)
-@click.option(
-    "-l",
-    "--language",
-    type=str,
-    help="Programming language (auto-detected from extension if not specified)",
-)
-@click.option(
-    "-t",
-    "--theme",
-    type=str,
-    default="dracula",
-    help="Color theme (default: dracula)",
-)
-@click.option(
-    "-o",
-    "--output",
-    type=click.Path(path_type=Path),
-    help="Output HTML file (prints to terminal if not specified)",
-)
-@click.option(
-    "-b",
-    "--background",
-    is_flag=True,
-    help="Include background color in terminal output",
-)
-@click.option(
-    "--list-themes",
-    is_flag=True,
-    help="List all available themes",
-)
-@click.version_option(version=__version__, prog_name="tscolor")
-@click.pass_context
-def cli(
-    ctx: click.Context,
-    file: Optional[Path],
-    language: Optional[str],
-    theme: str,
-    output: Optional[Path],
-    background: bool,
-    list_themes_flag: bool,
-):
-    """Syntax highlighting using tree-sitter.
-
-    Highlight source code files with beautiful colors in your terminal or export to HTML.
-
-    \b
-    Examples:
-      # Highlight a Python file with Dracula theme
-      tscolor script.py
-
-      # Highlight with a specific theme
-      tscolor script.py --theme monokai
-
-      # Highlight and save as HTML
-      tscolor script.py --output output.html
-
-      # Specify language explicitly
-      tscolor file.txt --language python
-
-      # List all available themes
-      tscolor --list-themes
-
-      # Include background color in terminal output
-      tscolor script.py --background
-    """
-    # If no command is invoked, handle the default behavior
-    if ctx.invoked_subcommand is None:
-        if list_themes_flag:
-            list_themes_cmd()
-        elif file:
-            highlight_file(file, language, theme, output, background)
-        else:
-            click.echo(ctx.get_help())
-
-
-@cli.command(name="themes")
-def list_themes_command():
-    """List all available themes."""
-    list_themes_cmd()
-
-
-@cli.command(name="highlight")
-@click.argument("file", type=click.Path(exists=True, path_type=Path))
-@click.option(
-    "-l",
-    "--language",
-    type=str,
-    help="Programming language (auto-detected from extension if not specified)",
-)
-@click.option(
-    "-t",
-    "--theme",
-    type=str,
-    default="dracula",
-    help="Color theme",
-)
-@click.option(
-    "-o",
-    "--output",
-    type=click.Path(path_type=Path),
-    help="Output HTML file",
-)
-@click.option(
-    "-b",
-    "--background",
-    is_flag=True,
-    help="Include background color in terminal output",
-)
-def highlight_command(
-    file: Path,
-    language: Optional[str],
-    theme: str,
-    output: Optional[Path],
-    background: bool,
-):
-    """Highlight a source code file."""
-    highlight_file(file, language, theme, output, background)
 
 
 def highlight_file(
@@ -231,7 +110,7 @@ def highlight_file(
     theme_name: str = "dracula",
     output: Optional[Path] = None,
     background: bool = False,
-) -> None:
+) -> int:
     """Highlight a source file and print to terminal or save as HTML.
 
     Args:
@@ -240,54 +119,56 @@ def highlight_file(
         theme_name: Theme name
         output: Optional output path for HTML
         background: Whether to include background color in terminal output
+
+    Returns:
+        Exit code (0 for success, 1 for error)
     """
     # Detect language if not specified
     if language is None:
         language = detect_language(file_path)
         if language is None:
-            click.secho(
+            print(
                 f"Error: Could not detect language for {file_path.suffix}",
-                fg="red",
-                err=True,
+                file=sys.stderr,
             )
-            click.echo("Please specify language with --language", err=True)
-            sys.exit(1)
+            print("Please specify language with --language", file=sys.stderr)
+            return 1
 
     # Load language parser
     if not load_language_parser(language):
-        click.secho(
+        print(
             f"Error: Could not load parser for language: {language}",
-            fg="red",
-            err=True,
+            file=sys.stderr,
         )
-        click.echo(
-            f"Make sure tree-sitter-{language} is installed:", err=True
+        print(
+            f"Make sure tree-sitter-{language} is installed:",
+            file=sys.stderr,
         )
-        click.echo(f"  pip install tree-sitter-{language}", err=True)
-        sys.exit(1)
+        print(f"  pip install tree-sitter-{language}", file=sys.stderr)
+        return 1
 
     # Get language configuration
     try:
         config = get_configuration(language)
     except (FileNotFoundError, KeyError) as e:
-        click.secho(f"Error: {e}", fg="red", err=True)
-        sys.exit(1)
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 
     # Get theme
     try:
         theme = get_theme(theme_name)
     except KeyError as e:
-        click.secho(f"Error: {e}", fg="red", err=True)
+        print(f"Error: {e}", file=sys.stderr)
         available = ", ".join(list_themes())
-        click.echo(f"Available themes: {available}", err=True)
-        sys.exit(1)
+        print(f"Available themes: {available}", file=sys.stderr)
+        return 1
 
     # Read source file
     try:
         source = file_path.read_bytes()
     except Exception as e:
-        click.secho(f"Error reading file: {e}", fg="red", err=True)
-        sys.exit(1)
+        print(f"Error reading file: {e}", file=sys.stderr)
+        return 1
 
     # Highlight the code
     highlighter = Highlighter()
@@ -304,7 +185,7 @@ def highlight_file(
                 title=f"{file_path.name} - Highlighted with TSColor",
             )
             output.write_text(html)
-            click.secho(f"HTML output saved to: {output}", fg="green")
+            print(f"HTML output saved to: {output}")
         else:
             # Print to terminal with ANSI colors
             formatter = AnsiFormatter(theme)
@@ -312,47 +193,153 @@ def highlight_file(
                 colored = formatter.format_with_background(source, events, config)
             else:
                 colored = formatter.format(source, events, config)
-            click.echo(colored)
+            print(colored)
+
+        return 0
 
     except Exception as e:
-        click.secho(f"Error during highlighting: {e}", fg="red", err=True)
+        print(f"Error during highlighting: {e}", file=sys.stderr)
         import traceback
 
         traceback.print_exc()
-        sys.exit(1)
+        return 1
 
 
-def list_themes_cmd() -> None:
-    """List all available themes."""
+def list_themes_cmd() -> int:
+    """List all available themes.
+
+    Returns:
+        Exit code (always 0)
+    """
     from . import get_theme_info
 
-    click.secho("Available themes:", bold=True)
-    click.echo()
+    print("Available themes:")
+    print()
 
     # List dark themes
     dark_themes = list_themes(category="dark")
     if dark_themes:
-        click.secho("Dark themes:", fg="cyan", bold=True)
+        print("Dark themes:")
         for name in dark_themes:
             info = get_theme_info(name)
             author = f" by {info['author']}" if info["author"] else ""
-            click.echo(f"  • {click.style(name, fg='green')}{author}")
-        click.echo()
+            print(f"  • {name}{author}")
+        print()
 
     # List light themes
     light_themes = list_themes(category="light")
     if light_themes:
-        click.secho("Light themes:", fg="yellow", bold=True)
+        print("Light themes:")
         for name in light_themes:
             info = get_theme_info(name)
             author = f" by {info['author']}" if info["author"] else ""
-            click.echo(f"  • {click.style(name, fg='green')}{author}")
-        click.echo()
+            print(f"  • {name}{author}")
+        print()
+
+    return 0
 
 
 def main() -> None:
     """Main entry point for the CLI."""
-    cli()
+    parser = argparse.ArgumentParser(
+        prog="tscolor",
+        description="Syntax highlighting using tree-sitter",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+examples:
+  # Highlight a Python file with Dracula theme
+  tscolor script.py
+
+  # Highlight with a specific theme
+  tscolor script.py --theme monokai
+
+  # Highlight and save as HTML
+  tscolor script.py --output output.html
+
+  # Specify language explicitly
+  tscolor file.txt --language python
+
+  # List all available themes
+  tscolor --list-themes
+
+  # Include background color in terminal output
+  tscolor script.py --background
+        """,
+    )
+
+    parser.add_argument(
+        "file",
+        nargs="?",
+        type=Path,
+        help="Source code file to highlight",
+    )
+
+    parser.add_argument(
+        "-l",
+        "--language",
+        type=str,
+        help="Programming language (auto-detected from extension if not specified)",
+    )
+
+    parser.add_argument(
+        "-t",
+        "--theme",
+        type=str,
+        default="dracula",
+        help="Color theme (default: dracula)",
+    )
+
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="Output HTML file (prints to terminal if not specified)",
+    )
+
+    parser.add_argument(
+        "-b",
+        "--background",
+        action="store_true",
+        help="Include background color in terminal output",
+    )
+
+    parser.add_argument(
+        "--list-themes",
+        action="store_true",
+        help="List all available themes",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+
+    args = parser.parse_args()
+
+    # Handle list-themes flag
+    if args.list_themes:
+        sys.exit(list_themes_cmd())
+
+    # Require file argument if not listing themes
+    if args.file is None:
+        parser.print_help()
+        sys.exit(0)
+
+    # Check if file exists
+    if not args.file.exists():
+        print(f"Error: File not found: {args.file}", file=sys.stderr)
+        sys.exit(1)
+
+    # Highlight the file
+    exit_code = highlight_file(
+        file_path=args.file,
+        language=args.language,
+        theme_name=args.theme,
+        output=args.output,
+        background=args.background,
+    )
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

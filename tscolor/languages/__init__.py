@@ -28,14 +28,17 @@ class LanguageRegistry:
     def register_language(
         self,
         name: str,
-        language: tree_sitter.Language,
+        language,
     ) -> None:
         """Register a tree-sitter language.
 
         Args:
             name: Language name (e.g., "python", "javascript")
-            language: Tree-sitter Language instance
+            language: Tree-sitter Language instance or language capsule
         """
+        # Wrap capsule in Language if needed
+        if not isinstance(language, tree_sitter.Language):
+            language = tree_sitter.Language(language)
         self._languages[name] = language
 
     def get_configuration(self, name: str) -> HighlightConfiguration:
@@ -83,13 +86,16 @@ class LanguageRegistry:
 _default_registry = LanguageRegistry()
 
 
-def register_language(name: str, language: tree_sitter.Language) -> None:
+def register_language(name: str, language) -> None:
     """Register a language in the default registry.
 
     Args:
         name: Language name
-        language: Tree-sitter Language instance
+        language: Tree-sitter Language instance or language capsule
     """
+    # Wrap capsule in Language if needed
+    if not isinstance(language, tree_sitter.Language):
+        language = tree_sitter.Language(language)
     _default_registry.register_language(name, language)
 
 

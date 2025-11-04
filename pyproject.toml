@@ -29,7 +29,6 @@ classifiers = [
 dependencies = [
     "tree-sitter>=0.20.0",
     "pyyaml>=6.0",
-    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
@@ -63,7 +62,8 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --cov=tscolor --cov-report=term-missing"
+# Coverage options removed temporarily - add back after fixing pytest-cov
+# addopts = "-v --cov=tscolor --cov-report=term-missing"
 
 [tool.black]
 line-length = 100

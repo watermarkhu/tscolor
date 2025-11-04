@@ -71,20 +71,20 @@ class HighlightConfiguration:
         # Create combined query
         combined_query_str = "\n".join(query_parts)
         try:
-            self.combined_query = language.query(combined_query_str)
+            self.combined_query = tree_sitter.Query(language, combined_query_str)
         except Exception:
             # Fallback: just use highlights query if combination fails
-            self.combined_query = language.query(highlights_query)
+            self.combined_query = tree_sitter.Query(language, highlights_query)
             self.locals_pattern_index = 0
             self.highlights_pattern_index = 0
 
         # Keep individual queries for backwards compatibility
-        self.highlights_query = language.query(highlights_query)
+        self.highlights_query = tree_sitter.Query(language, highlights_query)
         self.injections_query = (
-            language.query(injections_query) if injections_query else None
+            tree_sitter.Query(language, injections_query) if injections_query else None
         )
         self.locals_query = (
-            language.query(locals_query) if locals_query else None
+            tree_sitter.Query(language, locals_query) if locals_query else None
         )
 
         # Extract highlight names from queries if not provided
@@ -110,18 +110,18 @@ class HighlightConfiguration:
         names = set()
 
         # Get capture names from highlights query
-        for name in self.highlights_query.capture_names:
-            names.add(name)
+        for i in range(self.highlights_query.capture_count):
+            names.add(self.highlights_query.capture_name(i))
 
         # Get capture names from injections query
         if self.injections_query:
-            for name in self.injections_query.capture_names:
-                names.add(name)
+            for i in range(self.injections_query.capture_count):
+                names.add(self.injections_query.capture_name(i))
 
         # Get capture names from locals query
         if self.locals_query:
-            for name in self.locals_query.capture_names:
-                names.add(name)
+            for i in range(self.locals_query.capture_count):
+                names.add(self.locals_query.capture_name(i))
 
         return sorted(names)
 

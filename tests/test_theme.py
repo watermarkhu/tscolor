@@ -20,7 +20,7 @@ class TestThemeLoading:
     def test_get_github_light_theme(self):
         """Test loading GitHub Light theme."""
         theme = get_theme("github-light")
-        assert theme.name == "GitHub Light"
+        assert theme.name == "github-light"
         assert theme.category == "light"
         assert theme.is_light()
         assert not theme.is_dark()

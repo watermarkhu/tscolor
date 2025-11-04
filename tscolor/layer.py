@@ -88,21 +88,23 @@ class HighlightLayer:
         Yields:
             CaptureData for each matched capture
         """
-        # Execute the highlights query
-        captures = self.config.highlights_query.captures(self.tree.root_node)
+        # Execute the highlights query using QueryCursor
+        import tree_sitter
+        cursor = tree_sitter.QueryCursor(self.config.highlights_query)
+        matches = cursor.matches(self.tree.root_node)
 
-        for node, capture_name in captures:
-            # Check if this node falls within our valid ranges
-            if not self._node_in_ranges(node):
-                continue
+        # Convert matches to (node, capture_name) tuples
+        for pattern_index, captures_dict in matches:
+            for capture_name, nodes in captures_dict.items():
+                for node in nodes:
+                    # Check if this node falls within our valid ranges
+                    if not self._node_in_ranges(node):
+                        continue
 
-            # Get the pattern index (not directly available in py-tree-sitter)
-            # For now, we'll use a default of 0
-            pattern_index = 0
-
-            yield CaptureData(
-                node=node, capture_name=capture_name, pattern_index=pattern_index
-            )
+                    # Use the pattern_index from the match
+                    yield CaptureData(
+                        node=node, capture_name=capture_name, pattern_index=pattern_index
+                    )
 
     def _node_in_ranges(self, node: tree_sitter.Node) -> bool:
         """Check if a node falls within valid byte ranges for this layer.
