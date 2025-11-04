@@ -228,6 +228,7 @@ class Highlighter:
         source: bytes,
         sorted_events: List[SortableEvent],
         cancellation_flag: Optional[Callable[[], bool]],
+        byte_range: Optional[Tuple[int, int]] = None,
     ) -> Iterator[HighlightEvent]:
         """Emit highlight events, handling overlaps and deduplication.
 
@@ -235,17 +236,21 @@ class Highlighter:
             source: Source code bytes
             sorted_events: Sorted list of events
             cancellation_flag: Optional cancellation check
+            byte_range: Optional (start, end) byte range to constrain events
 
         Yields:
             HighlightEvent objects
         """
+        # Determine the range to process
+        start_byte, end_byte = byte_range if byte_range else (0, len(source))
+
         if not sorted_events:
-            # No highlights, emit entire source
-            if len(source) > 0:
-                yield SourceEvent(start=0, end=len(source))
+            # No highlights, emit entire range
+            if start_byte < end_byte:
+                yield SourceEvent(start=start_byte, end=end_byte)
             return
 
-        current_pos = 0
+        current_pos = start_byte
         active_highlights: List[Tuple[int, int, int]] = []  # (end, index, depth)
         seen_ranges: Set[Tuple[int, int, int]] = set()  # (start, end, depth)
 
@@ -286,9 +291,10 @@ class Highlighter:
                         yield HighlightEndEvent()
                         break
 
-        # Emit any remaining source
-        if current_pos < len(source):
-            yield SourceEvent(start=current_pos, end=len(source))
+        # Emit any remaining source within the byte range
+        end_byte = byte_range[1] if byte_range else len(source)
+        if current_pos < end_byte:
+            yield SourceEvent(start=current_pos, end=end_byte)
 
     def highlight_node(
         self,
@@ -324,9 +330,12 @@ class Highlighter:
             >>> events = highlighter.highlight_node(config, func_node, b"def hello(): pass")
         """
         # Create a layer for this specific node
-        # We need to create a temporary tree with this node as root
-        # Since tree-sitter doesn't allow us to create a tree from a node,
-        # we'll use the node's byte range to constrain highlights
+        # We need to parse the source to get the tree, then use the node's
+        # byte range to constrain highlights to just that node
+
+        # Set the parser language and parse the source
+        self.parser.language = config.language
+        tree = self.parser.parse(source)
 
         start_byte = node.start_byte
         end_byte = node.end_byte
@@ -334,7 +343,7 @@ class Highlighter:
         # Create a layer with restricted range
         layer = HighlightLayer(
             config=config,
-            tree=node.tree,  # type: ignore[attr-defined]  # Use the original tree
+            tree=tree,
             depth=0,
             ranges=[(start_byte, end_byte)],
         )
@@ -344,5 +353,7 @@ class Highlighter:
         # Extract and sort all highlight events from all layers
         events = self._collect_events_from_layers(layers, source)
 
-        # Deduplicate and emit events
-        yield from self._emit_events(source, events, cancellation_flag)
+        # Deduplicate and emit events within the node's byte range
+        yield from self._emit_events(
+            source, events, cancellation_flag, byte_range=(start_byte, end_byte)
+        )
