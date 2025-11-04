@@ -45,6 +45,13 @@ dev = [
     "ruff>=0.14.3",
     "ty>=0.0.1a25",
 ]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings>=0.26.0",
+    "mkdocstrings-python>=1.11.0",
+    "mkdocs-click>=0.8.0",
+]
 
 [project.scripts]
 tscolor = "tscolor.cli:main"

@@ -1,0 +1,130 @@
+site_name: TSColor
+site_description: Pure Python implementation of tree-sitter-highlight for syntax highlighting
+site_url: https://watermarkhu.github.io/tscolor
+repo_url: https://github.com/watermarkhu/tscolor
+repo_name: watermarkhu/tscolor
+copyright: Copyright &copy; 2025 TSColor Contributors
+edit_uri: edit/main/docs/
+
+watch:
+  - mkdocs.yml
+  - README.md
+  - tscolor/
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+
+nav:
+- Home:
+  - Overview: index.md
+  - Installation: installation.md
+  - Quick Start: quickstart.md
+  - License: license.md
+- Usage:
+  - usage/index.md
+  - CLI Reference: usage/cli.md
+  - Themes: usage/themes.md
+  - Formatters: usage/formatters.md
+  - Languages: usage/languages.md
+- API Reference:
+  - api/index.md
+  - Highlighter: api/highlighter.md
+  - Configuration: api/configuration.md
+  - Theme: api/theme.md
+  - Formatters:
+    - ANSI: api/formatters/ansi.md
+    - HTML: api/formatters/html.md
+  - Events: api/events.md
+  - Scope: api/scope.md
+
+theme:
+  name: material
+  palette:
+  - media: "(prefers-color-scheme)"
+    toggle:
+      icon: material/brightness-auto
+      name: Switch to light mode
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: indigo
+    accent: indigo
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: indigo
+    accent: lime
+    toggle:
+      icon: material/weather-night
+      name: Switch to system preference
+  features:
+  - announce.dismiss
+  - content.action.edit
+  - content.action.view
+  - content.code.annotate
+  - content.code.copy
+  - content.tooltips
+  - navigation.footer
+  - navigation.indexes
+  - navigation.sections
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.top
+  - search.highlight
+  - search.suggest
+  - toc.follow
+
+markdown_extensions:
+- abbr
+- attr_list
+- admonition
+- footnotes
+- md_in_html
+- pymdownx.details
+- pymdownx.emoji:
+    emoji_index: !!python/name:material.extensions.emoji.twemoji
+    emoji_generator: !!python/name:material.extensions.emoji.to_svg
+- pymdownx.highlight:
+    use_pygments: true
+    pygments_lang_class: true
+    anchor_linenums: true
+- pymdownx.inlinehilite
+- pymdownx.magiclink
+- pymdownx.snippets:
+    base_path: [!relative $config_dir]
+    check_paths: true
+- pymdownx.superfences:
+    custom_fences:
+    - name: mermaid
+      class: mermaid
+      format: !!python/name:pymdownx.superfences.fence_code_format
+- pymdownx.tabbed:
+    alternate_style: true
+- pymdownx.tasklist:
+    custom_checkbox: true
+- toc:
+    permalink: "¤"
+    toc_depth: 3
+
+plugins:
+- search
+- autorefs
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        paths: [.]
+        options:
+          docstring_style: google
+          show_source: true
+          show_root_heading: true
+          show_root_full_path: false
+          show_root_toc_entry: false
+          heading_level: 2
+          members_order: source
+          show_signature_annotations: true
+          separate_signature: true
+          merge_init_into_class: true
