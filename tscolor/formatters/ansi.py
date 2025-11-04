@@ -1,4 +1,5 @@
 """ANSI color formatter for terminal output."""
+
 from typing import Iterator, List
 from ..events import HighlightEvent, SourceEvent, HighlightStartEvent, HighlightEndEvent
 from ..theme import Theme

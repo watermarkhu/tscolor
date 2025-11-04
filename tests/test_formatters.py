@@ -1,4 +1,5 @@
 """Tests for output formatters."""
+
 import pytest
 
 try:
@@ -91,7 +92,9 @@ class TestHtmlFormatter:
 
         events = highlighter.highlight(config, simple_python_code)
         formatter = HtmlFormatter(theme)
-        result = formatter.format(simple_python_code, events, config, inline_styles=True)
+        result = formatter.format(
+            simple_python_code, events, config, inline_styles=True
+        )
 
         # Should return a string
         assert isinstance(result, str)

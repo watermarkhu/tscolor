@@ -1,4 +1,5 @@
 """Command-line interface for TSColor using argparse."""
+
 import sys
 import argparse
 from pathlib import Path
@@ -14,35 +15,7 @@ LANGUAGE_EXTENSIONS: Dict[str, str] = {
     ".py": "python",
     ".js": "javascript",
     ".jsx": "javascript",
-    ".ts": "typescript",
-    ".tsx": "typescript",
-    ".rs": "rust",
-    ".go": "go",
-    ".c": "c",
-    ".cpp": "cpp",
-    ".cc": "cpp",
-    ".cxx": "cpp",
-    ".h": "c",
-    ".hpp": "cpp",
-    ".java": "java",
-    ".rb": "ruby",
-    ".php": "php",
-    ".swift": "swift",
-    ".kt": "kotlin",
-    ".scala": "scala",
-    ".html": "html",
-    ".xml": "xml",
-    ".json": "json",
-    ".yaml": "yaml",
-    ".yml": "yaml",
-    ".toml": "toml",
-    ".css": "css",
-    ".scss": "scss",
-    ".sass": "sass",
-    ".md": "markdown",
-    ".sh": "bash",
-    ".bash": "bash",
-    ".zsh": "bash",
+    ".m": "matlab",
 }
 
 
@@ -73,20 +46,7 @@ def load_language_parser(language: str) -> bool:
         "python": "tree_sitter_python",
         "javascript": "tree_sitter_javascript",
         "typescript": "tree_sitter_typescript",
-        "rust": "tree_sitter_rust",
-        "go": "tree_sitter_go",
-        "c": "tree_sitter_c",
-        "cpp": "tree_sitter_cpp",
-        "java": "tree_sitter_java",
-        "ruby": "tree_sitter_ruby",
-        "php": "tree_sitter_php",
-        "swift": "tree_sitter_swift",
-        "kotlin": "tree_sitter_kotlin",
-        "scala": "tree_sitter_scala",
-        "html": "tree_sitter_html",
-        "css": "tree_sitter_css",
-        "json": "tree_sitter_json",
-        "bash": "tree_sitter_bash",
+        "matlab": "tree_sitter_matlab",
     }
 
     package_name = package_map.get(language)

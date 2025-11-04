@@ -1,4 +1,5 @@
 """Configuration for syntax highlighting."""
+
 from pathlib import Path
 from typing import List, Optional, Dict
 import tree_sitter
@@ -162,9 +163,7 @@ class HighlightConfiguration:
         )
 
         locals_path = language_path / "locals.scm"
-        locals_query = (
-            locals_path.read_text() if locals_path.exists() else None
-        )
+        locals_query = locals_path.read_text() if locals_path.exists() else None
 
         return cls(
             language=language,

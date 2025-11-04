@@ -1,4 +1,5 @@
 """Theme definitions for syntax highlighting."""
+
 from typing import Dict, Optional, Tuple, List, Literal
 from pathlib import Path
 import yaml
@@ -253,9 +254,7 @@ def list_themes(category: Optional[ThemeCategory] = None) -> List[str]:
     if category is None:
         return sorted(_THEMES.keys())
 
-    return sorted(
-        name for name, theme in _THEMES.items() if theme.category == category
-    )
+    return sorted(name for name, theme in _THEMES.items() if theme.category == category)
 
 
 def register_theme(theme: Theme) -> None:

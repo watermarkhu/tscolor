@@ -25,6 +25,7 @@ def factorial(n):
 print(factorial(5))
 """
 
+
 def main():
     # Register the Python language
     print("Registering Python language...")

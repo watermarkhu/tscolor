@@ -1,4 +1,5 @@
 """Enhanced syntax highlighting engine with multi-layer support."""
+
 from typing import Iterator, Optional, Callable, Dict, Set, Tuple, List
 import tree_sitter
 
@@ -71,9 +72,7 @@ class HighlighterV2:
 
         # Process language injections if available
         if config.injections_query:
-            injection_layers = self._extract_injections(
-                config, tree, source, depth=1
-            )
+            injection_layers = self._extract_injections(config, tree, source, depth=1)
             layers.extend(injection_layers)
 
         # Extract and sort all highlight events from all layers

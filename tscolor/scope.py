@@ -1,4 +1,5 @@
 """Local scope tracking for variable highlighting."""
+
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
@@ -43,7 +44,9 @@ class LocalScope:
         self.range = range
         self.definitions = []
 
-    def add_definition(self, name: str, value_range: Tuple[int, int]) -> LocalDefinition:
+    def add_definition(
+        self, name: str, value_range: Tuple[int, int]
+    ) -> LocalDefinition:
         """Add a variable definition to this scope.
 
         Args:

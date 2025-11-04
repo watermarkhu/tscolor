@@ -1,5 +1,5 @@
 """Tests for local scope tracking."""
-import pytest
+
 from tscolor.scope import LocalScope, LocalDefinition, ScopeStack
 
 

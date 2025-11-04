@@ -1,4 +1,5 @@
 """Highlight layer management for multi-language support."""
+
 from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Iterator
 import tree_sitter
@@ -90,6 +91,7 @@ class HighlightLayer:
         """
         # Execute the highlights query using QueryCursor
         import tree_sitter
+
         cursor = tree_sitter.QueryCursor(self.config.highlights_query)
         matches = cursor.matches(self.tree.root_node)
 
@@ -103,7 +105,9 @@ class HighlightLayer:
 
                     # Use the pattern_index from the match
                     yield CaptureData(
-                        node=node, capture_name=capture_name, pattern_index=pattern_index
+                        node=node,
+                        capture_name=capture_name,
+                        pattern_index=pattern_index,
                     )
 
     def _node_in_ranges(self, node: tree_sitter.Node) -> bool:
@@ -135,9 +139,7 @@ class HighlightLayer:
         # Create a new scope
         # Check if it inherits from parent (can be determined by properties)
         inherits = True  # Default to inheriting
-        scope = LocalScope(
-            inherits=inherits, range=(node.start_byte, node.end_byte)
-        )
+        scope = LocalScope(inherits=inherits, range=(node.start_byte, node.end_byte))
         self.scope_stack.push(scope)
 
     def process_local_definition(

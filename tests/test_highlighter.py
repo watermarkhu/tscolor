@@ -1,4 +1,5 @@
 """Tests for the syntax highlighter."""
+
 import pytest
 
 try:
@@ -15,7 +16,7 @@ try:
 except ImportError:
     HAS_JAVASCRIPT = False
 
-from tscolor import Highlighter, HighlightConfiguration
+from tscolor import Highlighter
 from tscolor import SourceEvent, HighlightStartEvent, HighlightEndEvent
 from tscolor.languages import register_language, get_configuration
 
@@ -108,7 +109,10 @@ class TestHighlightConfiguration:
 
         assert len(config.highlight_names) > 0
         # Should have common captures
-        assert "keyword" in config.highlight_names or "keyword.control" in config.highlight_names
+        assert (
+            "keyword" in config.highlight_names
+            or "keyword.control" in config.highlight_names
+        )
 
 
 @pytest.mark.skipif(not HAS_JAVASCRIPT, reason="tree-sitter-javascript not installed")

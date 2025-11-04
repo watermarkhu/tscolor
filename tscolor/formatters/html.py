@@ -1,5 +1,6 @@
 """HTML formatter for web output."""
-from typing import Iterator, List
+
+from typing import Iterator
 from html import escape
 from ..events import HighlightEvent, SourceEvent, HighlightStartEvent, HighlightEndEvent
 from ..theme import Theme

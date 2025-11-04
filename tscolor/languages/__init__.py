@@ -1,4 +1,5 @@
 """Language support for tree-sitter highlighting."""
+
 from pathlib import Path
 from typing import Dict, Optional
 import tree_sitter
@@ -64,9 +65,7 @@ class LanguageRegistry:
         language_path = self.languages_dir / name
 
         if not language_path.exists():
-            raise FileNotFoundError(
-                f"Language directory not found: {language_path}"
-            )
+            raise FileNotFoundError(f"Language directory not found: {language_path}")
 
         return HighlightConfiguration.from_language_path(
             language=language,

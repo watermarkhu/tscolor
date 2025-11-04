@@ -1,4 +1,5 @@
 """Tests for the CLI interface."""
+
 import subprocess
 import sys
 from pathlib import Path
@@ -152,9 +153,7 @@ class TestHighlightFile:
         test_file = tmp_path / "test.txt"
         test_file.write_bytes(b"def hello(): pass")
 
-        exit_code, stdout, stderr = run_cli(
-            str(test_file), "--language", "python"
-        )
+        exit_code, stdout, stderr = run_cli(str(test_file), "--language", "python")
 
         # Should work with explicit language
         assert exit_code in [0, 1]
@@ -196,6 +195,5 @@ class TestCLIErrors:
 
         assert exit_code == 1
         assert (
-            "could not detect language" in stderr.lower()
-            or "error" in stderr.lower()
+            "could not detect language" in stderr.lower() or "error" in stderr.lower()
         )

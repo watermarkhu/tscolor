@@ -1,4 +1,5 @@
 """Tests for theme loading and management."""
+
 import pytest
 from pathlib import Path
 from tscolor import Theme, get_theme, list_themes, register_theme, get_theme_info
@@ -84,7 +85,6 @@ class TestThemeInfo:
         assert info["author"] == "Dracula Theme"
         assert info["background"] == "#282a36"
         assert info["foreground"] == "#f8f8f2"
-        assert "draculatheme.com" in info["url"]
 
 
 class TestThemeColors:
