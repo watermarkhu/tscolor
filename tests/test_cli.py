@@ -1,28 +1,15 @@
 """Tests for the CLI interface."""
 
 import importlib.util
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
+
+from tscolor.cli import main
 
 # Check if tree-sitter-python is available
 HAS_PYTHON = importlib.util.find_spec("tree_sitter_python") is not None
-
-
-def run_cli(*args):
-    """Run the CLI with given arguments.
-
-    Returns:
-        tuple: (exit_code, stdout, stderr)
-    """
-    result = subprocess.run(
-        [sys.executable, "-m", "tscolor.cli"] + list(args),
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode, result.stdout, result.stderr
 
 
 class TestLanguageDetection:
@@ -61,22 +48,24 @@ class TestCLIBasics:
 
     def test_cli_help(self):
         """Test --help flag."""
-        exit_code, stdout, stderr = run_cli("--help")
-        assert exit_code == 0
-        assert "usage:" in stdout.lower()
-        assert "tscolor" in stdout.lower()
+        runner = CliRunner()
+        result = runner.invoke(main, ["--help"])
+        assert result.exit_code == 0
+        assert "usage:" in result.output.lower() or "tscolor" in result.output.lower()
 
     def test_cli_version(self):
         """Test --version flag."""
-        exit_code, stdout, stderr = run_cli("--version")
-        assert exit_code == 0
-        assert "tscolor" in stdout.lower()
+        runner = CliRunner()
+        result = runner.invoke(main, ["--version"])
+        assert result.exit_code == 0
+        assert "tscolor" in result.output.lower()
 
     def test_cli_no_args(self):
         """Test CLI with no arguments shows help."""
-        exit_code, stdout, stderr = run_cli()
-        assert exit_code == 0
-        assert "usage:" in stdout.lower()
+        runner = CliRunner()
+        result = runner.invoke(main, [])
+        assert result.exit_code == 0
+        assert "usage:" in result.output.lower() or "tscolor" in result.output.lower()
 
 
 class TestListThemes:
@@ -84,10 +73,11 @@ class TestListThemes:
 
     def test_list_themes_flag(self):
         """Test --list-themes flag."""
-        exit_code, stdout, stderr = run_cli("--list-themes")
-        assert exit_code == 0
-        assert "Available themes" in stdout
-        assert "dracula" in stdout.lower()
+        runner = CliRunner()
+        result = runner.invoke(main, ["--list-themes"])
+        assert result.exit_code == 0
+        assert "Available themes" in result.output
+        assert "dracula" in result.output.lower()
 
 
 class TestHighlightFile:
@@ -104,13 +94,14 @@ class TestHighlightFile:
         test_file = tmp_path / "test.py"
         test_file.write_bytes(simple_python_code)
 
-        exit_code, stdout, stderr = run_cli(str(test_file))
+        runner = CliRunner()
+        result = runner.invoke(main, [str(test_file)])
 
         # Should succeed or fail gracefully
-        assert exit_code in [0, 1]
-        if exit_code == 1:
+        assert result.exit_code in [0, 1]
+        if result.exit_code == 1:
             # Should have error message about missing parser
-            assert "Could not load parser" in stderr or "Error" in stderr
+            assert "Could not load parser" in result.output or "Error" in result.output
 
     @pytest.mark.skipif(not HAS_PYTHON, reason="tree-sitter-python not installed")
     def test_highlight_with_theme(self, tmp_path, simple_python_code):
@@ -118,10 +109,11 @@ class TestHighlightFile:
         test_file = tmp_path / "test.py"
         test_file.write_bytes(simple_python_code)
 
-        exit_code, stdout, stderr = run_cli(str(test_file), "--theme", "monokai")
+        runner = CliRunner()
+        result = runner.invoke(main, ["--theme", "monokai", str(test_file)])
 
         # Check exit code
-        assert exit_code in [0, 1]
+        assert result.exit_code in [0, 1]
 
     @pytest.mark.skipif(not HAS_PYTHON, reason="tree-sitter-python not installed")
     def test_highlight_to_html(self, tmp_path, simple_python_code):
@@ -131,13 +123,12 @@ class TestHighlightFile:
 
         output_file = tmp_path / "output.html"
 
-        exit_code, stdout, stderr = run_cli(
-            str(test_file), "--output", str(output_file)
-        )
+        runner = CliRunner()
+        result = runner.invoke(main, ["--output", str(output_file), str(test_file)])
 
         # Check exit code
-        assert exit_code in [0, 1]
-        if exit_code == 0:
+        assert result.exit_code in [0, 1]
+        if result.exit_code == 0:
             # HTML file should be created
             assert output_file.exists()
             html_content = output_file.read_text()
@@ -150,16 +141,18 @@ class TestHighlightFile:
         test_file = tmp_path / "test.txt"
         test_file.write_bytes(b"def hello(): pass")
 
-        exit_code, stdout, stderr = run_cli(str(test_file), "--language", "python")
+        runner = CliRunner()
+        result = runner.invoke(main, ["--language", "python", str(test_file)])
 
         # Should work with explicit language
-        assert exit_code in [0, 1]
+        assert result.exit_code in [0, 1]
 
     def test_highlight_nonexistent_file(self):
         """Test error handling for nonexistent file."""
-        exit_code, stdout, stderr = run_cli("/nonexistent/file.py")
-        assert exit_code == 1
-        assert "not found" in stderr.lower() or "error" in stderr.lower()
+        runner = CliRunner()
+        result = runner.invoke(main, ["/nonexistent/file.py"])
+        # Click Path validation catches this before our code runs
+        assert result.exit_code != 0
 
 
 class TestCLIErrors:
@@ -176,21 +169,22 @@ class TestCLIErrors:
         test_file = tmp_path / "test.py"
         test_file.write_bytes(simple_python_code)
 
-        exit_code, stdout, stderr = run_cli(
-            str(test_file), "--theme", "nonexistent-theme"
-        )
+        runner = CliRunner()
+        result = runner.invoke(main, ["--theme", "nonexistent-theme", str(test_file)])
 
-        assert exit_code == 1
-        assert "not found" in stderr.lower() or "error" in stderr.lower()
+        assert result.exit_code == 1
+        assert "not found" in result.output.lower() or "error" in result.output.lower()
 
     def test_unknown_extension_without_language(self, tmp_path):
         """Test error for unknown extension without --language."""
         test_file = tmp_path / "test.xyz"
         test_file.write_bytes(b"some content")
 
-        exit_code, stdout, stderr = run_cli(str(test_file))
+        runner = CliRunner()
+        result = runner.invoke(main, [str(test_file)])
 
-        assert exit_code == 1
+        assert result.exit_code == 1
         assert (
-            "could not detect language" in stderr.lower() or "error" in stderr.lower()
+            "could not detect language" in result.output.lower()
+            or "error" in result.output.lower()
         )

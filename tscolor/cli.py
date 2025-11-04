@@ -1,21 +1,49 @@
-"""Command-line interface for TSColor using argparse."""
+"""Command-line interface for TSColor using Click."""
 
 import sys
-import argparse
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
 
-from . import Highlighter, get_theme, list_themes, __version__
-from .languages import register_language, get_configuration
+import click
+
+from . import Highlighter, __version__, get_theme, list_themes
 from .formatters import AnsiFormatter, HtmlFormatter
-
+from .languages import get_configuration, register_language
 
 # Language mapping from file extension to language name
 LANGUAGE_EXTENSIONS: Dict[str, str] = {
     ".py": "python",
     ".js": "javascript",
     ".jsx": "javascript",
-    ".m": "matlab",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".rs": "rust",
+    ".go": "go",
+    ".c": "c",
+    ".cpp": "cpp",
+    ".cc": "cpp",
+    ".cxx": "cpp",
+    ".h": "c",
+    ".hpp": "cpp",
+    ".java": "java",
+    ".rb": "ruby",
+    ".php": "php",
+    ".swift": "swift",
+    ".kt": "kotlin",
+    ".scala": "scala",
+    ".html": "html",
+    ".xml": "xml",
+    ".json": "json",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".toml": "toml",
+    ".css": "css",
+    ".scss": "scss",
+    ".sass": "sass",
+    ".md": "markdown",
+    ".sh": "bash",
+    ".bash": "bash",
+    ".zsh": "bash",
 }
 
 
@@ -46,6 +74,20 @@ def load_language_parser(language: str) -> bool:
         "python": "tree_sitter_python",
         "javascript": "tree_sitter_javascript",
         "typescript": "tree_sitter_typescript",
+        "rust": "tree_sitter_rust",
+        "go": "tree_sitter_go",
+        "c": "tree_sitter_c",
+        "cpp": "tree_sitter_cpp",
+        "java": "tree_sitter_java",
+        "ruby": "tree_sitter_ruby",
+        "php": "tree_sitter_php",
+        "swift": "tree_sitter_swift",
+        "kotlin": "tree_sitter_kotlin",
+        "scala": "tree_sitter_scala",
+        "html": "tree_sitter_html",
+        "css": "tree_sitter_css",
+        "json": "tree_sitter_json",
+        "bash": "tree_sitter_bash",
         "matlab": "tree_sitter_matlab",
     }
 
@@ -62,6 +104,133 @@ def load_language_parser(language: str) -> bool:
         return True
     except ImportError:
         return False
+
+
+@click.command(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    epilog="""
+\b
+Examples:
+  # Highlight a Python file with Dracula theme
+  tscolor script.py
+
+  # Highlight with a specific theme
+  tscolor --theme monokai script.py
+
+  # Highlight and save as HTML
+  tscolor --output output.html script.py
+
+  # Specify language explicitly
+  tscolor --language python file.txt
+
+  # List all available themes
+  tscolor --list-themes
+
+  # Include background color in terminal output
+  tscolor --background script.py
+""",
+)
+@click.version_option(version=__version__, prog_name="tscolor")
+@click.argument("file", type=click.Path(exists=True, path_type=Path), required=False)
+@click.option(
+    "-l",
+    "--language",
+    type=str,
+    help="Programming language (auto-detected from extension if not specified)",
+)
+@click.option(
+    "-t",
+    "--theme",
+    type=str,
+    default="dracula",
+    show_default=True,
+    help="Color theme",
+)
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(path_type=Path),
+    help="Output HTML file (prints to terminal if not specified)",
+)
+@click.option(
+    "-b",
+    "--background",
+    is_flag=True,
+    help="Include background color in terminal output",
+)
+@click.option(
+    "--list-themes",
+    "list_themes_flag",
+    is_flag=True,
+    help="List all available themes",
+)
+def main(
+    file: Optional[Path],
+    language: Optional[str],
+    theme: str,
+    output: Optional[Path],
+    background: bool,
+    list_themes_flag: bool,
+) -> None:
+    """Syntax highlighting using tree-sitter.
+
+    Highlight source code files with syntax highlighting powered by tree-sitter.
+    Supports multiple languages and themes, with output to terminal (ANSI colors)
+    or HTML files.
+    """
+    # Handle list-themes flag
+    if list_themes_flag:
+        show_themes()
+        return
+
+    # Require file if not listing themes
+    if file is None:
+        ctx = click.get_current_context()
+        click.echo(ctx.get_help())
+        ctx.exit(0)
+
+    # At this point, file is guaranteed to be not None
+    assert file is not None  # Type narrowing for type checker
+
+    # Highlight the file
+    exit_code = highlight_file(
+        file_path=file,
+        language=language,
+        theme_name=theme,
+        output=output,
+        background=background,
+    )
+    if exit_code != 0:
+        ctx = click.get_current_context()
+        ctx.exit(exit_code)
+
+
+def show_themes() -> None:
+    """List all available themes."""
+    from . import get_theme_info
+
+    click.echo("Available themes:")
+    click.echo()
+
+    # List dark themes
+    dark_themes = list_themes(category="dark")
+    if dark_themes:
+        click.echo("Dark themes:")
+        for name in dark_themes:
+            info = get_theme_info(name)
+            author = f" by {info['author']}" if info["author"] else ""
+            click.echo(f"  • {name}{author}")
+        click.echo()
+
+    # List light themes
+    light_themes = list_themes(category="light")
+    if light_themes:
+        click.echo("Light themes:")
+        for name in light_themes:
+            info = get_theme_info(name)
+            author = f" by {info['author']}" if info["author"] else ""
+            click.echo(f"  • {name}{author}")
+        click.echo()
 
 
 def highlight_file(
@@ -87,47 +256,47 @@ def highlight_file(
     if language is None:
         language = detect_language(file_path)
         if language is None:
-            print(
+            click.echo(
                 f"Error: Could not detect language for {file_path.suffix}",
-                file=sys.stderr,
+                err=True,
             )
-            print("Please specify language with --language", file=sys.stderr)
+            click.echo("Please specify language with --language", err=True)
             return 1
 
     # Load language parser
     if not load_language_parser(language):
-        print(
+        click.echo(
             f"Error: Could not load parser for language: {language}",
-            file=sys.stderr,
+            err=True,
         )
-        print(
+        click.echo(
             f"Make sure tree-sitter-{language} is installed:",
-            file=sys.stderr,
+            err=True,
         )
-        print(f"  pip install tree-sitter-{language}", file=sys.stderr)
+        click.echo(f"  pip install tree-sitter-{language}", err=True)
         return 1
 
     # Get language configuration
     try:
         config = get_configuration(language)
     except (FileNotFoundError, KeyError) as e:
-        print(f"Error: {e}", file=sys.stderr)
+        click.echo(f"Error: {e}", err=True)
         return 1
 
     # Get theme
     try:
         theme = get_theme(theme_name)
     except KeyError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        click.echo(f"Error: {e}", err=True)
         available = ", ".join(list_themes())
-        print(f"Available themes: {available}", file=sys.stderr)
+        click.echo(f"Available themes: {available}", err=True)
         return 1
 
     # Read source file
     try:
         source = file_path.read_bytes()
     except Exception as e:
-        print(f"Error reading file: {e}", file=sys.stderr)
+        click.echo(f"Error reading file: {e}", err=True)
         return 1
 
     # Highlight the code
@@ -145,7 +314,7 @@ def highlight_file(
                 title=f"{file_path.name} - Highlighted with TSColor",
             )
             output.write_text(html)
-            print(f"HTML output saved to: {output}")
+            click.echo(f"HTML output saved to: {output}")
         else:
             # Print to terminal with ANSI colors
             formatter = AnsiFormatter(theme)
@@ -153,153 +322,18 @@ def highlight_file(
                 colored = formatter.format_with_background(source, events, config)
             else:
                 colored = formatter.format(source, events, config)
-            print(colored)
+            # Use sys.stdout.write to preserve ANSI codes
+            sys.stdout.write(colored)
+            sys.stdout.write("\n")
 
         return 0
 
     except Exception as e:
-        print(f"Error during highlighting: {e}", file=sys.stderr)
+        click.echo(f"Error during highlighting: {e}", err=True)
         import traceback
 
         traceback.print_exc()
         return 1
-
-
-def list_themes_cmd() -> int:
-    """List all available themes.
-
-    Returns:
-        Exit code (always 0)
-    """
-    from . import get_theme_info
-
-    print("Available themes:")
-    print()
-
-    # List dark themes
-    dark_themes = list_themes(category="dark")
-    if dark_themes:
-        print("Dark themes:")
-        for name in dark_themes:
-            info = get_theme_info(name)
-            author = f" by {info['author']}" if info["author"] else ""
-            print(f"  • {name}{author}")
-        print()
-
-    # List light themes
-    light_themes = list_themes(category="light")
-    if light_themes:
-        print("Light themes:")
-        for name in light_themes:
-            info = get_theme_info(name)
-            author = f" by {info['author']}" if info["author"] else ""
-            print(f"  • {name}{author}")
-        print()
-
-    return 0
-
-
-def main() -> None:
-    """Main entry point for the CLI."""
-    parser = argparse.ArgumentParser(
-        prog="tscolor",
-        description="Syntax highlighting using tree-sitter",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-examples:
-  # Highlight a Python file with Dracula theme
-  tscolor script.py
-
-  # Highlight with a specific theme
-  tscolor script.py --theme monokai
-
-  # Highlight and save as HTML
-  tscolor script.py --output output.html
-
-  # Specify language explicitly
-  tscolor file.txt --language python
-
-  # List all available themes
-  tscolor --list-themes
-
-  # Include background color in terminal output
-  tscolor script.py --background
-        """,
-    )
-
-    parser.add_argument(
-        "file",
-        nargs="?",
-        type=Path,
-        help="Source code file to highlight",
-    )
-
-    parser.add_argument(
-        "-l",
-        "--language",
-        type=str,
-        help="Programming language (auto-detected from extension if not specified)",
-    )
-
-    parser.add_argument(
-        "-t",
-        "--theme",
-        type=str,
-        default="dracula",
-        help="Color theme (default: dracula)",
-    )
-
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        help="Output HTML file (prints to terminal if not specified)",
-    )
-
-    parser.add_argument(
-        "-b",
-        "--background",
-        action="store_true",
-        help="Include background color in terminal output",
-    )
-
-    parser.add_argument(
-        "--list-themes",
-        action="store_true",
-        help="List all available themes",
-    )
-
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"%(prog)s {__version__}",
-    )
-
-    args = parser.parse_args()
-
-    # Handle list-themes flag
-    if args.list_themes:
-        sys.exit(list_themes_cmd())
-
-    # Require file argument if not listing themes
-    if args.file is None:
-        parser.print_help()
-        sys.exit(0)
-
-    # Check if file exists
-    if not args.file.exists():
-        print(f"Error: File not found: {args.file}", file=sys.stderr)
-        sys.exit(1)
-
-    # Highlight the file
-    exit_code = highlight_file(
-        file_path=args.file,
-        language=args.language,
-        theme_name=args.theme,
-        output=args.output,
-        background=args.background,
-    )
-    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

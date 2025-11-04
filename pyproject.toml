@@ -29,6 +29,7 @@ classifiers = [
 dependencies = [
     "tree-sitter>=0.20.0",
     "pyyaml>=6.0",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +60,7 @@ include = ["tscolor*"]
 [tool.setuptools.package-data]
 tscolor = [
     "languages/**/*.scm",
+    "themes/*.yaml",
 ]
 
 [tool.pytest.ini_options]

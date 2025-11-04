@@ -188,7 +188,7 @@ def _load_builtin_themes() -> None:
         return
 
     # Find the themes directory relative to this file
-    themes_dir = Path(__file__).parent.parent / "themes"
+    themes_dir = Path(__file__).parent / "themes"
 
     if themes_dir.exists():
         for theme_file in themes_dir.glob("*.yaml"):
