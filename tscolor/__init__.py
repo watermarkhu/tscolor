@@ -28,10 +28,17 @@ Example:
 
 __version__ = "0.1.0"
 
-# Use the enhanced highlighter as the default
-from .highlighter_v2 import Highlighter
+# Import the main highlighter
+from .highlighter import Highlighter
 from .configuration import HighlightConfiguration
-from .theme import Theme, DraculaTheme, get_theme, THEMES
+from .theme import (
+    Theme,
+    get_theme,
+    list_themes,
+    register_theme,
+    get_theme_info,
+    THEMES,
+)
 from .events import (
     HighlightEvent,
     SourceEvent,
@@ -45,8 +52,10 @@ __all__ = [
     "Highlighter",
     "HighlightConfiguration",
     "Theme",
-    "DraculaTheme",
     "get_theme",
+    "list_themes",
+    "register_theme",
+    "get_theme_info",
     "THEMES",
     "HighlightEvent",
     "SourceEvent",

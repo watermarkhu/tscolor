@@ -1,0 +1,92 @@
+name: Dracula
+category: dark
+author: Dracula Theme
+description: Official Dracula theme colors
+url: https://draculatheme.com
+
+background: "#282a36"
+foreground: "#f8f8f2"
+selection: "#44475a"
+comment: "#6272a4"
+
+colors:
+  # Keywords and control flow
+  keyword: "#ff79c6"
+  keyword.control: "#ff79c6"
+  keyword.function: "#8be9fd"
+  keyword.operator: "#ff79c6"
+  keyword.return: "#ff79c6"
+  keyword.import: "#ff79c6"
+
+  # Functions and methods
+  function: "#50fa7b"
+  function.builtin: "#50fa7b"
+  function.method: "#50fa7b"
+  function.call: "#50fa7b"
+  method: "#50fa7b"
+  method.call: "#50fa7b"
+
+  # Types
+  type: "#8be9fd"
+  type.builtin: "#8be9fd"
+  class: "#8be9fd"
+  constructor: "#8be9fd"
+
+  # Constants and literals
+  constant: "#bd93f9"
+  constant.builtin: "#bd93f9"
+  number: "#bd93f9"
+  boolean: "#bd93f9"
+  float: "#bd93f9"
+  integer: "#bd93f9"
+
+  # Strings
+  string: "#f1fa8c"
+  string.escape: "#ff79c6"
+  character: "#f1fa8c"
+
+  # Comments
+  comment: "#6272a4"
+  comment.line: "#6272a4"
+  comment.block: "#6272a4"
+
+  # Variables
+  variable: "#f8f8f2"
+  variable.builtin: "#bd93f9"
+  variable.parameter: "#ffb86c"
+  parameter: "#ffb86c"
+
+  # Operators
+  operator: "#ff79c6"
+
+  # Punctuation
+  punctuation: "#f8f8f2"
+  punctuation.bracket: "#f8f8f2"
+  punctuation.delimiter: "#f8f8f2"
+
+  # Properties and attributes
+  property: "#f8f8f2"
+  attribute: "#50fa7b"
+
+  # Tags (HTML, XML, etc.)
+  tag: "#ff79c6"
+  tag.attribute: "#50fa7b"
+
+  # Markup
+  markup.heading: "#bd93f9"
+  markup.bold: "#ffb86c"
+  markup.italic: "#f1fa8c"
+  markup.link: "#8be9fd"
+  markup.quote: "#f1fa8c"
+  markup.list: "#8be9fd"
+
+  # Special
+  module: "#f8f8f2"
+  namespace: "#f8f8f2"
+  label: "#8be9fd"
+  annotation: "#f1fa8c"
+  decorator: "#50fa7b"
+
+  # Errors and warnings
+  error: "#ff5555"
+  warning: "#ffb86c"
