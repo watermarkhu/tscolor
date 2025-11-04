@@ -117,7 +117,10 @@ class HighlighterV2:
                 for node in nodes:
                     # Look for injection.language captures
                     if capture_name == "injection.language":
-                        lang_name = node.text.decode("utf-8", errors="replace")
+                        if node.text:
+                            lang_name = node.text.decode("utf-8", errors="replace")
+                        else:
+                            continue
                         if lang_name in self._injection_configs:
                             if lang_name not in language_ranges:
                                 language_ranges[lang_name] = []

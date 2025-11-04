@@ -1,17 +1,14 @@
 """Tests for the CLI interface."""
 
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
+
 import pytest
 
 # Check if tree-sitter-python is available
-try:
-    import tree_sitter_python
-
-    HAS_PYTHON = True
-except ImportError:
-    HAS_PYTHON = False
+HAS_PYTHON = importlib.util.find_spec("tree_sitter_python") is not None
 
 
 def run_cli(*args):

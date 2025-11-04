@@ -111,17 +111,17 @@ class HighlightConfiguration:
         names = set()
 
         # Get capture names from highlights query
-        for i in range(self.highlights_query.capture_count):
+        for i in range(self.highlights_query.capture_count):  # type: ignore[arg-type]
             names.add(self.highlights_query.capture_name(i))
 
         # Get capture names from injections query
         if self.injections_query:
-            for i in range(self.injections_query.capture_count):
+            for i in range(self.injections_query.capture_count):  # type: ignore[arg-type]
                 names.add(self.injections_query.capture_name(i))
 
         # Get capture names from locals query
         if self.locals_query:
-            for i in range(self.locals_query.capture_count):
+            for i in range(self.locals_query.capture_count):  # type: ignore[arg-type]
                 names.add(self.locals_query.capture_name(i))
 
         return sorted(names)

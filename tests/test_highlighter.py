@@ -152,7 +152,8 @@ class TestHighlightCancellation:
             cancel_count[0] += 1
             return cancel_count[0] > 2  # Cancel after a few checks
 
-        events = list(highlighter.highlight(config, sample_python_code, should_cancel))
+        # Consume the iterator to trigger cancellation checks
+        list(highlighter.highlight(config, sample_python_code, should_cancel))
 
         # Should have fewer events due to cancellation (or possibly none)
         # The exact behavior depends on when cancellation is checked

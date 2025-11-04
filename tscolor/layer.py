@@ -155,6 +155,8 @@ class HighlightLayer:
             return
 
         # Extract variable name (usually from the node's text)
+        if not node.text:
+            return
         name = node.text.decode("utf-8", errors="replace")
 
         # Add definition to current scope
@@ -177,6 +179,8 @@ class HighlightLayer:
             Highlight index if found, None otherwise
         """
         # Extract variable name
+        if not node.text:
+            return None
         name = node.text.decode("utf-8", errors="replace")
 
         # Search scope stack for definition

@@ -56,7 +56,7 @@ def load_language_parser(language: str) -> bool:
     try:
         # Dynamically import the language module
         module = __import__(package_name, fromlist=["language"])
-        lang_capsule = module.language()
+        lang_capsule = module.language()  # type: ignore[attr-defined]
         # Register will handle wrapping the capsule in Language
         register_language(language, lang_capsule)
         return True
