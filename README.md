@@ -11,6 +11,7 @@ A pure Python implementation of tree-sitter-highlight for syntax highlighting us
 - 🔍 **Local Scope Tracking**: Track local variable definitions and references
 - 🖥️ **Terminal Output**: ANSI color formatting for beautiful terminal output
 - 🌐 **HTML Output**: Generate syntax-highlighted HTML for web pages
+- 💻 **CLI Tool**: Powerful command-line interface built with Click
 - 🔌 **Extensible**: Easy to add new languages and themes
 - ✅ **Well Tested**: Comprehensive pytest test suite
 
@@ -27,6 +28,32 @@ pip install tree-sitter-python tree-sitter-javascript
 ```
 
 ## Quick Start
+
+### Command Line Interface
+
+TSColor provides a powerful CLI for highlighting files directly in your terminal:
+
+```bash
+# Highlight a Python file (language auto-detected)
+tscolor script.py
+
+# Use a different theme
+tscolor script.py --theme monokai
+
+# Export to HTML
+tscolor script.py --output highlighted.html
+
+# Specify language explicitly
+tscolor config.txt --language yaml
+
+# Include background color in terminal
+tscolor script.py --background
+
+# List all available themes
+tscolor --list-themes
+```
+
+### Python API
 
 ```python
 from tscolor import Highlighter, get_theme
@@ -137,7 +164,64 @@ register_theme(theme)
 theme = get_theme("my custom theme")
 ```
 
-## HTML Export
+## Command Line Interface
+
+TSColor includes a comprehensive CLI built with Click for easy terminal usage.
+
+### Basic Usage
+
+```bash
+# Highlight a file (auto-detects language from extension)
+tscolor myfile.py
+
+# Specify a theme
+tscolor myfile.py -t monokai
+tscolor myfile.py --theme github-light
+
+# Export to HTML
+tscolor myfile.py -o output.html
+tscolor myfile.py --output highlighted.html
+
+# Specify language explicitly (for files with non-standard extensions)
+tscolor config.txt -l yaml
+tscolor README --language markdown
+
+# Include background color in terminal output
+tscolor myfile.py -b
+tscolor myfile.py --background
+```
+
+### List Themes
+
+```bash
+# List all available themes
+tscolor --list-themes
+
+# Or use the subcommand
+tscolor themes
+```
+
+### Supported Languages
+
+The CLI auto-detects language from file extension:
+- Python (.py)
+- JavaScript (.js, .jsx)
+- TypeScript (.ts, .tsx)
+- Rust (.rs)
+- Go (.go)
+- C (.c, .h)
+- C++ (.cpp, .cc, .cxx, .hpp)
+- Java (.java)
+- Ruby (.rb)
+- PHP (.php)
+- HTML (.html)
+- CSS (.css)
+- JSON (.json)
+- YAML (.yaml, .yml)
+- Bash (.sh, .bash, .zsh)
+- And more...
+
+### HTML Export
 
 ```python
 from tscolor.formatters import HtmlFormatter
@@ -156,6 +240,12 @@ html = html_formatter.format_complete(
 # Save to file
 with open("highlighted.html", "w") as f:
     f.write(html)
+```
+
+Or use the CLI:
+
+```bash
+tscolor script.py --output highlighted.html
 ```
 
 ## Project Structure

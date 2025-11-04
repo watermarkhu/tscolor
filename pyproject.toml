@@ -29,6 +29,7 @@ classifiers = [
 dependencies = [
     "tree-sitter>=0.20.0",
     "pyyaml>=6.0",
+    "click>=8.0.0",
 ]
 
 [project.optional-dependencies]
@@ -40,6 +41,9 @@ dev = [
     "tree-sitter-python>=0.20.0",
     "tree-sitter-javascript>=0.20.0",
 ]
+
+[project.scripts]
+tscolor = "tscolor.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/watermarkhu/tscolor"
