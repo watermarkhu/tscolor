@@ -1,6 +1,7 @@
 """Tests for the syntax highlighter."""
 
 import pytest
+import tree_sitter
 
 try:
     import tree_sitter_python as ts_python
@@ -185,3 +186,64 @@ class TestEmptyAndInvalidInput:
 
         # Should handle gracefully
         assert isinstance(events, list)
+
+
+@pytest.mark.skipif(not HAS_PYTHON, reason="tree-sitter-python not installed")
+class TestNodeHighlighting:
+    """Test highlighting individual tree-sitter nodes."""
+
+    def test_highlight_node(self):
+        """Test highlighting a specific node."""
+        from tscolor.languages import register_language, get_configuration
+
+        register_language("python", ts_python.language())
+        highlighter = Highlighter()
+        config = get_configuration("python")
+
+        # Parse code to get a tree
+        source = b"def hello():\n    pass"
+        parser = tree_sitter.Parser(tree_sitter.Language(ts_python.language()))
+        tree = parser.parse(source)
+
+        # Get the function definition node
+        func_node = tree.root_node.children[0]
+
+        # Highlight just that node
+        events = list(highlighter.highlight_node(config, func_node, source))
+
+        # Should have some events
+        assert len(events) > 0
+
+        # Should have source and highlight events
+        event_types = {type(e).__name__ for e in events}
+        assert "SourceEvent" in event_types or "HighlightStartEvent" in event_types
+
+    def test_highlight_node_with_range(self):
+        """Test that highlight_node respects node boundaries."""
+        from tscolor.languages import register_language, get_configuration
+
+        register_language("python", ts_python.language())
+        highlighter = Highlighter()
+        config = get_configuration("python")
+
+        # Parse code with multiple statements
+        source = b"x = 1\ny = 2\nz = 3"
+        parser = tree_sitter.Parser(tree_sitter.Language(ts_python.language()))
+        tree = parser.parse(source)
+
+        # Get the second statement node (y = 2)
+        second_stmt = tree.root_node.children[1]
+
+        # Highlight just that node
+        events = list(highlighter.highlight_node(config, second_stmt, source))
+
+        # Collect all byte positions from events
+        positions = set()
+        for event in events:
+            if hasattr(event, "start"):
+                positions.add(event.start)
+                positions.add(event.end)
+
+        # All positions should be within the node's range
+        for pos in positions:
+            assert second_stmt.start_byte <= pos <= second_stmt.end_byte

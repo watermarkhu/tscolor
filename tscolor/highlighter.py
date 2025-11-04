@@ -8,7 +8,7 @@ from .events import HighlightEvent, SourceEvent, HighlightStartEvent, HighlightE
 from .layer import HighlightLayer, SortableEvent
 
 
-class HighlighterV2:
+class Highlighter:
     """Enhanced syntax highlighter with multi-layer support.
 
     This highlighter supports:
@@ -18,7 +18,7 @@ class HighlighterV2:
     - Overlapping highlight deduplication
 
     Example:
-        >>> highlighter = HighlighterV2()
+        >>> highlighter = Highlighter()
         >>> config = HighlightConfiguration(...)
         >>> source = b"def hello(): pass"
         >>> for event in highlighter.highlight(config, source):
@@ -290,6 +290,59 @@ class HighlighterV2:
         if current_pos < len(source):
             yield SourceEvent(start=current_pos, end=len(source))
 
+    def highlight_node(
+        self,
+        config: HighlightConfiguration,
+        node: tree_sitter.Node,
+        source: bytes,
+        cancellation_flag: Optional[Callable[[], bool]] = None,
+    ) -> Iterator[HighlightEvent]:
+        """Highlight a specific tree-sitter node.
 
-# Keep the simple Highlighter for backwards compatibility
-Highlighter = HighlighterV2
+        This method allows highlighting of an individual node from an already-parsed
+        tree, rather than parsing an entire source file. This is useful when you want
+        to highlight a specific AST node or a subsection of code.
+
+        Args:
+            config: Highlight configuration for the language
+            node: Tree-sitter node to highlight
+            source: Source code bytes (must contain the node's text)
+            cancellation_flag: Optional callable that returns True to cancel
+
+        Yields:
+            HighlightEvent objects describing how to highlight the node
+
+        Example:
+            >>> # Parse code first
+            >>> parser = tree_sitter.Parser(tree_sitter.Language(ts_python.language()))
+            >>> tree = parser.parse(b"def hello(): pass")
+            >>> func_node = tree.root_node.children[0]  # Get function node
+            >>>
+            >>> # Highlight just that node
+            >>> highlighter = Highlighter()
+            >>> config = get_configuration("python")
+            >>> events = highlighter.highlight_node(config, func_node, b"def hello(): pass")
+        """
+        # Create a layer for this specific node
+        # We need to create a temporary tree with this node as root
+        # Since tree-sitter doesn't allow us to create a tree from a node,
+        # we'll use the node's byte range to constrain highlights
+
+        start_byte = node.start_byte
+        end_byte = node.end_byte
+
+        # Create a layer with restricted range
+        layer = HighlightLayer(
+            config=config,
+            tree=node.tree,  # type: ignore[attr-defined]  # Use the original tree
+            depth=0,
+            ranges=[(start_byte, end_byte)],
+        )
+
+        layers = [layer]
+
+        # Extract and sort all highlight events from all layers
+        events = self._collect_events_from_layers(layers, source)
+
+        # Deduplicate and emit events
+        yield from self._emit_events(source, events, cancellation_flag)
