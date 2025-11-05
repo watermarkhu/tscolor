@@ -350,7 +350,9 @@ class TestEdgeCases:
         lang = tree_sitter.Language(ts_python.language())
 
         # Create a config with a query that will never match (looking for import in code without imports)
-        highlights_query = '((import_statement) @keyword (#eq? @keyword "import_that_does_not_exist"))'
+        highlights_query = (
+            '((import_statement) @keyword (#eq? @keyword "import_that_does_not_exist"))'
+        )
 
         config = HighlightConfiguration(
             language=lang,

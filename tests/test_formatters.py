@@ -1,5 +1,6 @@
 """Tests for output formatters."""
 
+import copy
 import pytest
 import tree_sitter
 
@@ -211,7 +212,7 @@ class TestAnsiFormatterEdgeCases:
         register_language("python", ts_python.language())
         theme = get_theme("dracula")
         highlighter = Highlighter()
-        
+
         # Create a Python lang with nested captures
         lang = tree_sitter.Language(ts_python.language())
         highlights_query = """
@@ -220,15 +221,14 @@ class TestAnsiFormatterEdgeCases:
 (identifier) @variable
 """
         config = HighlightConfiguration(
-            language=lang,
-            highlights_query=highlights_query
+            language=lang, highlights_query=highlights_query
         )
-        
+
         source = b"def hello(): pass"
         events = highlighter.highlight(config, source)
         formatter = AnsiFormatter(theme)
         result = formatter.format(source, events, config)
-        
+
         # Should have ANSI codes
         assert "\033[" in result
         # Should have reset codes
@@ -237,18 +237,18 @@ class TestAnsiFormatterEdgeCases:
     def test_format_with_background_no_bg_color(self):
         """Test format_with_background when theme has no background."""
         register_language("python", ts_python.language())
-        # Create a theme without background
-        theme = get_theme("dracula")
+        # Create a copy of the theme and remove background
+        theme = copy.deepcopy(get_theme("dracula"))
         theme.background = None
-        
+
         highlighter = Highlighter()
         config = get_configuration("python")
         source = b"def hello(): pass"
-        
+
         events = highlighter.highlight(config, source)
         formatter = AnsiFormatter(theme)
         result = formatter.format_with_background(source, events, config)
-        
+
         # Should NOT contain background color code
         assert "\033[48;2;" not in result
         # Should still have formatting
@@ -257,16 +257,17 @@ class TestAnsiFormatterEdgeCases:
     def test_print_highlighted_function(self, simple_python_code, capsys):
         """Test the print_highlighted utility function."""
         from tscolor.formatters.ansi import print_highlighted
-        
+
         register_language("python", ts_python.language())
         theme = get_theme("dracula")
         highlighter = Highlighter()
         config = get_configuration("python")
-        
+
         events = highlighter.highlight(config, simple_python_code)
-        
+
         # Test printing without background
-        print_highlighted(simple_python_code, events, config, theme, use_background=False)
+        print_highlighted(
+            simple_python_code, events, config, theme, use_background=False
+        )
         captured = capsys.readouterr()
         assert len(captured.out) > 0
-        
