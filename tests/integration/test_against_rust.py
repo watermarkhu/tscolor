@@ -11,33 +11,21 @@ The tests will be skipped if the Rust binary is not available.
 """
 
 import subprocess
-from pathlib import Path
 import pytest
-
-try:
-    import tree_sitter_python as ts_python
-
-    HAS_PYTHON = True
-except ImportError:
-    HAS_PYTHON = False
-
-try:
-    import tree_sitter_javascript as ts_javascript
-
-    HAS_JAVASCRIPT = True
-except ImportError:
-    HAS_JAVASCRIPT = False
 
 from tscolor import Highlighter
 from tscolor import SourceEvent, HighlightStartEvent, HighlightEndEvent
 from tscolor.languages import register_language, get_configuration
 
-
-# Check if the Rust binary is available
-RUST_BINARY = (
-    Path(__file__).parent.parent.parent / "target" / "release" / "ts-highlight"
+# Import constants and modules from conftest
+from tests.conftest import (
+    HAS_RUST_BINARY,
+    HAS_PYTHON,
+    HAS_JAVASCRIPT,
+    RUST_BINARY,
+    ts_python,
+    ts_javascript,
 )
-HAS_RUST_BINARY = RUST_BINARY.exists()
 
 
 def parse_rust_output(output: str) -> list:
