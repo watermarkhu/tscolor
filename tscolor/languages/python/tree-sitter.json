@@ -1,0 +1,6 @@
+{
+  "scope": "source.python",
+  "file-types": ["py", "pyi", "pyw"],
+  "injection-regex": "python",
+  "highlights": "highlights.scm"
+}

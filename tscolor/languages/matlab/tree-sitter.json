@@ -1,0 +1,6 @@
+{
+  "scope": "source.matlab",
+  "file-types": ["m"],
+  "injection-regex": "matlab",
+  "highlights": "highlights.scm"
+}
