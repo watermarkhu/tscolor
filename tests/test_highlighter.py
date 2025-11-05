@@ -3,23 +3,13 @@
 import pytest
 import tree_sitter
 
-try:
-    import tree_sitter_python as ts_python
-
-    HAS_PYTHON = True
-except ImportError:
-    HAS_PYTHON = False
-
-try:
-    import tree_sitter_javascript as ts_javascript
-
-    HAS_JAVASCRIPT = True
-except ImportError:
-    HAS_JAVASCRIPT = False
-
 from tscolor import Highlighter
 from tscolor import SourceEvent, HighlightStartEvent, HighlightEndEvent
 from tscolor.languages import register_language, get_configuration
+from tscolor.configuration import HighlightConfiguration
+
+# Import from conftest
+from tests.conftest import HAS_PYTHON, HAS_JAVASCRIPT, ts_python, ts_javascript
 
 
 @pytest.mark.skipif(not HAS_PYTHON, reason="tree-sitter-python not installed")
@@ -247,3 +237,157 @@ class TestNodeHighlighting:
         # All positions should be within the node's range
         for pos in positions:
             assert second_stmt.start_byte <= pos <= second_stmt.end_byte
+
+
+@pytest.mark.skipif(not HAS_PYTHON, reason="tree-sitter-python not installed")
+class TestLanguageInjection:
+    """Test language injection support."""
+
+    def test_register_injection_language(self):
+        """Test registering an injection language."""
+        register_language("python", ts_python.language())
+        highlighter = Highlighter()
+
+        # Register JavaScript as an injection language
+        if HAS_JAVASCRIPT:
+            js_config = HighlightConfiguration(
+                language=tree_sitter.Language(ts_javascript.language()),
+                highlights_query="(identifier) @variable",
+            )
+            highlighter.register_injection_language("javascript", js_config)
+
+            # Verify it's registered
+            assert "javascript" in highlighter._injection_configs
+            assert highlighter._injection_configs["javascript"] == js_config
+
+    def test_highlight_with_injections_query(self):
+        """Test highlighting with an injections query."""
+        register_language("python", ts_python.language())
+        lang = tree_sitter.Language(ts_python.language())
+
+        # Create a simple injections query that looks for strings
+        highlights_query = "(identifier) @variable"
+        injections_query = """
+(string) @injection.content
+"""
+
+        config = HighlightConfiguration(
+            language=lang,
+            highlights_query=highlights_query,
+            injections_query=injections_query,
+        )
+
+        highlighter = Highlighter()
+        source = b'x = "hello world"'
+
+        # This won't actually inject anything since we didn't register
+        # an injection language, but it should execute without error
+        events = list(highlighter.highlight(config, source))
+        assert len(events) > 0
+
+
+@pytest.mark.skipif(not HAS_PYTHON, reason="tree-sitter-python not installed")
+class TestLocalScopeTracking:
+    """Test local scope and variable tracking."""
+
+    def test_highlight_with_local_scope_query(self):
+        """Test highlighting with local scope tracking."""
+        lang = tree_sitter.Language(ts_python.language())
+
+        # Create queries with local scope tracking
+        highlights_query = "(identifier) @variable"
+        locals_query = """
+(function_definition) @local.scope
+(parameters (identifier) @local.definition)
+"""
+
+        config = HighlightConfiguration(
+            language=lang,
+            highlights_query=highlights_query,
+            locals_query=locals_query,
+        )
+
+        highlighter = Highlighter()
+        source = b"def foo(x):\n    return x"
+
+        # Should process local scopes
+        events = list(highlighter.highlight(config, source))
+        assert len(events) > 0
+
+    def test_highlight_with_local_reference(self):
+        """Test highlighting with local reference resolution."""
+        lang = tree_sitter.Language(ts_python.language())
+
+        # Create queries with local reference tracking
+        highlights_query = "(identifier) @variable"
+        locals_query = """
+(function_definition) @local.scope
+(parameters (identifier) @local.definition)
+(identifier) @local.reference
+"""
+
+        config = HighlightConfiguration(
+            language=lang,
+            highlights_query=highlights_query,
+            locals_query=locals_query,
+        )
+
+        highlighter = Highlighter()
+        source = b"def foo(x):\n    y = x\n    return y"
+
+        # Should resolve local references
+        events = list(highlighter.highlight(config, source))
+        assert len(events) > 0
+
+
+@pytest.mark.skipif(not HAS_PYTHON, reason="tree-sitter-python not installed")
+class TestEdgeCases:
+    """Test edge cases and error conditions."""
+
+    def test_empty_sorted_events(self):
+        """Test highlighting when there are no highlight events."""
+        register_language("python", ts_python.language())
+        lang = tree_sitter.Language(ts_python.language())
+
+        # Create a config with a query that will never match (looking for import in code without imports)
+        highlights_query = '((import_statement) @keyword (#eq? @keyword "import_that_does_not_exist"))'
+
+        config = HighlightConfiguration(
+            language=lang,
+            highlights_query=highlights_query,
+        )
+
+        highlighter = Highlighter()
+        source = b"def foo(): pass"
+
+        # Should handle gracefully and just emit source events
+        events = list(highlighter.highlight(config, source))
+
+        # Should have at least one source event for the whole source
+        source_events = [e for e in events if isinstance(e, SourceEvent)]
+        assert len(source_events) >= 1
+
+    def test_highlight_with_byte_range(self):
+        """Test highlighting constrained to a byte range."""
+        register_language("python", ts_python.language())
+        highlighter = Highlighter()
+        config = get_configuration("python")
+
+        source = b"x = 1\ny = 2\nz = 3"
+        parser = tree_sitter.Parser(tree_sitter.Language(ts_python.language()))
+        tree = parser.parse(source)
+
+        # Get the second line node
+        second_stmt = tree.root_node.children[1]
+
+        # Use highlight_node which uses byte_range internally
+        events = list(highlighter.highlight_node(config, second_stmt, source))
+
+        # Should have events
+        assert len(events) > 0
+
+        # All events should be within the node's range
+        for event in events:
+            if isinstance(event, SourceEvent):
+                assert event.start >= second_stmt.start_byte
+                assert event.end <= second_stmt.end_byte
