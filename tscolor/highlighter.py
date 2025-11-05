@@ -5,7 +5,7 @@ import tree_sitter
 
 from .configuration import HighlightConfiguration
 from .events import HighlightEvent, SourceEvent, HighlightStartEvent, HighlightEndEvent
-from .layer import HighlightLayer, SortableEvent
+from .layer import HighlightLayer, SortableEvent, CaptureData
 
 
 class Highlighter:
@@ -30,6 +30,37 @@ class Highlighter:
         """Initialize a new highlighter instance."""
         self.parser = tree_sitter.Parser()
         self._injection_configs: Dict[str, HighlightConfiguration] = {}
+
+    def _resolve_highlight_index(
+        self, capture_name: str, capture_index_map: Dict[str, int]
+    ) -> Optional[int]:
+        """Resolve a capture name to a highlight index with hierarchical fallback.
+
+        Implements hierarchical matching like tree-sitter-highlight:
+        - First tries exact match (e.g., "function.call")
+        - Falls back to parent (e.g., "function" for "function.call")
+        - Continues up the hierarchy until a match is found or exhausted
+
+        Args:
+            capture_name: The capture name from the query (e.g., "function.call")
+            capture_index_map: Mapping from capture names to highlight indices
+
+        Returns:
+            Highlight index if found, None otherwise
+        """
+        # Try exact match first
+        if capture_name in capture_index_map:
+            return capture_index_map[capture_name]
+
+        # Try hierarchical fallback
+        # For "function.call.method", try "function.call", then "function"
+        parts = capture_name.split(".")
+        for i in range(len(parts) - 1, 0, -1):
+            parent_name = ".".join(parts[:i])
+            if parent_name in capture_index_map:
+                return capture_index_map[parent_name]
+
+        return None
 
     def register_injection_language(
         self, name: str, config: HighlightConfiguration
@@ -173,12 +204,16 @@ class Highlighter:
         events = []
 
         for layer in layers:
-            # Extract highlights from this layer
+            # First, collect all captures and deduplicate by node position
+            # When multiple captures match the same node, keep the one with highest pattern_index
+            node_captures: Dict[Tuple[int, int], Tuple[CaptureData, int]] = {}
+
             for capture_data in layer.extract_highlights():
                 node = capture_data.node
                 capture_name = capture_data.capture_name
+                node_key = (node.start_byte, node.end_byte)
 
-                # Handle local scope captures
+                # Handle local scope captures immediately (don't deduplicate)
                 if capture_name == "local.scope":
                     layer.process_local_scope(node, capture_name)
                     continue
@@ -190,29 +225,45 @@ class Highlighter:
                     highlight_index = layer.resolve_local_reference(node, capture_name)
                     if highlight_index is None:
                         continue
+                    node_captures[node_key] = (capture_data, highlight_index)
                 else:
-                    # Regular highlight capture
-                    if capture_name not in layer.config.capture_index_map:
+                    # Regular highlight capture with hierarchical matching
+                    highlight_index = self._resolve_highlight_index(
+                        capture_name, layer.config.capture_index_map
+                    )
+                    if highlight_index is None:
                         continue
-                    highlight_index = layer.config.capture_index_map[capture_name]
 
-                # Create start and end events
+                    # Keep this capture if it's the first or has higher pattern_index
+                    if node_key not in node_captures:
+                        node_captures[node_key] = (capture_data, highlight_index)
+                    else:
+                        existing_capture, existing_index = node_captures[node_key]
+                        # Higher pattern_index = later in query = higher priority
+                        if capture_data.pattern_index >= existing_capture.pattern_index:
+                            node_captures[node_key] = (capture_data, highlight_index)
+
+            # Now create events from deduplicated captures
+            for (start_byte, end_byte), (
+                capture_data,
+                highlight_index,
+            ) in node_captures.items():
                 start_event = SortableEvent(
-                    sort_key=layer.sort_key(node.start_byte, is_end=False),
+                    sort_key=layer.sort_key(start_byte, is_end=False),
                     event_type="start",
-                    position=node.start_byte,
+                    position=start_byte,
                     highlight_index=highlight_index,
                     depth=layer.depth,
-                    range=(node.start_byte, node.end_byte),
+                    range=(start_byte, end_byte),
                 )
 
                 end_event = SortableEvent(
-                    sort_key=layer.sort_key(node.end_byte, is_end=True),
+                    sort_key=layer.sort_key(end_byte, is_end=True),
                     event_type="end",
-                    position=node.end_byte,
+                    position=end_byte,
                     highlight_index=highlight_index,
                     depth=layer.depth,
-                    range=(node.start_byte, node.end_byte),
+                    range=(start_byte, end_byte),
                 )
 
                 events.append(start_event)

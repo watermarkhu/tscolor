@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 use std::env;
 use std::fs;
 use std::io::{self, Read};
-use std::path::PathBuf;
 use tree_sitter_highlight::{HighlightConfiguration, HighlightEvent, Highlighter};
 
 fn main() -> Result<()> {
@@ -28,29 +27,27 @@ fn main() -> Result<()> {
         buffer
     };
 
-    // Get the language and configuration
-    let (language, mut config) = match language_name.as_str() {
+    // Get the language configuration
+    let mut config = match language_name.as_str() {
         "python" => {
             let highlights_query = include_str!("../../../tscolor/languages/python/highlights.scm");
-            let mut config = HighlightConfiguration::new(
+            HighlightConfiguration::new(
                 tree_sitter_python::LANGUAGE.into(),
                 "python",
                 highlights_query,
                 "",  // injections
                 "",  // locals
-            )?;
-            (tree_sitter_python::LANGUAGE.into(), config)
+            )?
         }
         "javascript" => {
             let highlights_query = include_str!("../../../tscolor/languages/javascript/highlights.scm");
-            let mut config = HighlightConfiguration::new(
+            HighlightConfiguration::new(
                 tree_sitter_javascript::LANGUAGE.into(),
                 "javascript",
                 highlights_query,
                 "",  // injections
                 "",  // locals
-            )?;
-            (tree_sitter_javascript::LANGUAGE.into(), config)
+            )?
         }
         _ => {
             anyhow::bail!("Unsupported language: {}", language_name);

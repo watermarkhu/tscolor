@@ -5,6 +5,38 @@ from typing import List, Optional, Dict
 import tree_sitter
 
 
+# Default highlight names following tree-sitter-highlight's standard order
+# This list must match the order used by the Rust tree-sitter-highlight library
+DEFAULT_HIGHLIGHT_NAMES = [
+    "attribute",
+    "comment",
+    "constant",
+    "constant.builtin",
+    "constructor",
+    "embedded",
+    "error",
+    "escape",
+    "function",
+    "function.builtin",
+    "keyword",
+    "number",
+    "operator",
+    "property",
+    "punctuation",
+    "punctuation.bracket",
+    "punctuation.delimiter",
+    "punctuation.special",
+    "string",
+    "string.special",
+    "tag",
+    "type",
+    "type.builtin",
+    "variable",
+    "variable.builtin",
+    "variable.parameter",
+]
+
+
 class HighlightConfiguration:
     """Configuration for syntax highlighting a specific language.
 
@@ -105,26 +137,20 @@ class HighlightConfiguration:
     def _extract_capture_names(self) -> List[str]:
         """Extract unique capture names from all queries.
 
+        Returns the complete DEFAULT_HIGHLIGHT_NAMES list to match the
+        Rust tree-sitter-highlight library's behavior. This ensures that
+        highlight indices are consistent between Python and Rust implementations.
+
+        Query captures that don't match any standard name (directly or hierarchically)
+        are ignored during highlighting via the hierarchical resolution in the highlighter.
+
         Returns:
-            List of unique capture names found in the queries
+            Complete list of standard highlight names
         """
-        names = set()
-
-        # Get capture names from highlights query
-        for i in range(self.highlights_query.capture_count):  # type: ignore[arg-type]
-            names.add(self.highlights_query.capture_name(i))
-
-        # Get capture names from injections query
-        if self.injections_query:
-            for i in range(self.injections_query.capture_count):  # type: ignore[arg-type]
-                names.add(self.injections_query.capture_name(i))
-
-        # Get capture names from locals query
-        if self.locals_query:
-            for i in range(self.locals_query.capture_count):  # type: ignore[arg-type]
-                names.add(self.locals_query.capture_name(i))
-
-        return sorted(names)
+        # Always return the complete standard list to ensure consistent indices
+        # Captures in queries that don't match these names will be handled via
+        # hierarchical matching in the highlighter (_resolve_highlight_index)
+        return list(DEFAULT_HIGHLIGHT_NAMES)
 
     @classmethod
     def from_language_path(
@@ -138,6 +164,9 @@ class HighlightConfiguration:
         - highlights.scm (required)
         - injections.scm (optional)
         - locals.scm (optional)
+
+        Uses the standard DEFAULT_HIGHLIGHT_NAMES list to match
+        the behavior of the Rust tree-sitter-highlight library.
 
         Args:
             language: Tree-sitter Language for parsing
@@ -165,6 +194,7 @@ class HighlightConfiguration:
         locals_path = language_path / "locals.scm"
         locals_query = locals_path.read_text() if locals_path.exists() else None
 
+        # Auto-extract highlight names (will be ordered with standard names first)
         return cls(
             language=language,
             highlights_query=highlights_query,
