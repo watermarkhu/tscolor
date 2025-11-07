@@ -1,0 +1,174 @@
+name: Qualify
+
+on:
+  merge_group:
+  push:
+    branches: [main]
+  pull_request:
+    types:
+      - opened
+      - closed
+      - reopened
+      - synchronize
+      - labeled
+      - unlabeled
+      - edited
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Test deploy documentation
+    uses: ./.github/workflows/docs.yaml
+    permissions: 
+      contents: write
+    secrets: inherit
+    with:
+      version: ${{ format('pr-{0}', github.head_ref) || 'test' }}
+      alias: "test"
+      set-default: false
+      push: false
+
+  setup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      python-versions: ${{ steps.get-versions.outputs.python-versions }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    
+    - name: Get Python versions from pyproject.toml
+      id: get-versions
+      run: |
+        # Extract Python versions from classifiers
+        versions=$(grep -E "Programming Language :: Python :: 3\.[0-9]+" pyproject.toml | \
+                  sed -E 's/.*Python :: (3\.[0-9]+).*/\1/' | \
+                  sort -V | \
+                  jq -R -s -c 'split("\n")[:-1]')
+        echo "python-versions=$versions" >> $GITHUB_OUTPUT
+        echo "Found Python versions: $versions"
+
+  test:
+    name: Run checks and tests
+    needs: setup
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ fromJson(needs.setup.outputs.python-versions) }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+      with:
+        submodules: true
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        version: "latest"
+        
+    - name: Cache uv
+      id: cache-uv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: ${{ runner.os }}-qualify-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
+
+    - name: Install dependencies
+      if: steps.cache-uv.outputs.cache_it != 'true'
+      run: |
+        uv sync --dev --all-extras --python ${{ matrix.python-version }}
+
+    - name: Run Ruff linter
+      run: uv run ruff check
+
+    - name: Run Ruff formatter
+      run: uv run ruff format --check
+
+    - name: Run Ty type checking
+      run: uv run ty check
+
+    - name: Cache cargo
+      id: cache-cargo
+      uses: actions/cache@v4
+      with:
+        path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+        key: ${{ runner.os }}-qualify-${{ hashFiles('Cargo.lock') }}
+
+    - name: Run Cargo build
+      if: steps.cache-cargo.outputs.cache_it != 'true'
+      run: cargo build --release
+
+    - name: Run tests
+      run: |
+        uv run pytest -v --tb=short --color=yes \
+          --cov mkdocstrings_handlers.github --cov-branch --cov-report=xml \
+          --junit-xml=pytest.xml
+
+    - name: Upload Test Results
+      if: (!cancelled())
+      uses: actions/upload-artifact@v5
+      with:
+        name: python${{ matrix.python-version }}
+        path: "*.xml"
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [setup, test]
+    if: (!cancelled())
+    permissions:
+      contents: read
+      checks: write
+      id-token: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: results
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "results/**/pytest.xml"
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          use_oidc: true
+          directory: results
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          use_oidc: true
+          directory: results
+
+      - name: Check all jobs
+        run: |
+          if [[ "${{ needs.test.result }}" == "success" ]]; then
+            echo "✅ All Python versions passed CI checks"
+            echo "## 🎉 CI Summary" >> $GITHUB_STEP_SUMMARY
+            echo "All tests passed across Python versions: ${{ needs.setup.outputs.python-versions }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some Python versions failed CI checks"
+            echo "## ❌ CI Summary" >> $GITHUB_STEP_SUMMARY
+            echo "Some tests failed. Check individual job results for details." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

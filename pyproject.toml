@@ -38,6 +38,7 @@ dev = [
     "prek>=0.2.13",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
+    "python-semantic-release>=10.4.1",
     "ruff>=0.14.3",
     "ty>=0.0.1a25",
 ]
@@ -72,7 +73,4 @@ include = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
 addopts = "-v --color=yes --cov=tscolor --cov-report=term-missing"
