@@ -29,8 +29,16 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
-  
+
+      - name: Cache uv
+        id: cache-uv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ runner.os }}-docs-uv-${{ hashFiles('uv.lock') }}
+
       - name: Sync dependencies
+        if: steps.cache-uv.outputs.cache-hit != 'true'
         run: |
           uv sync --no-dev --group docs
       
@@ -85,7 +93,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: .venv
-        key: ${{ runner.os }}-qualify-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
+        key: ${{ runner.os }}-qualify-uv-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
 
     - name: Install dependencies
       if: steps.cache-uv.outputs.cache-hit != 'true'
@@ -109,7 +117,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-        key: ${{ runner.os }}-qualify-${{ hashFiles('Cargo.lock') }}
+        key: ${{ runner.os }}-qualify-cargo-${{ hashFiles('Cargo.lock') }}
 
     - name: Run Cargo build
       if: steps.cache-cargo.outputs.cache-hit != 'true'

@@ -1349,9 +1349,9 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "click", specifier = ">=8.0.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "tree-sitter", specifier = ">=0.20.0" },
+    { name = "click", specifier = ">=8.0.0,<9" },
+    { name = "pyyaml", specifier = ">=6.0,<7" },
+    { name = "tree-sitter", specifier = ">=0.20.0,<1" },
     { name = "tree-sitter-javascript", marker = "extra == 'javascript'", specifier = ">=0.20.0" },
     { name = "tree-sitter-matlab", marker = "extra == 'matlab'", specifier = ">=1.2.6" },
     { name = "tree-sitter-python", marker = "extra == 'python'", specifier = ">=0.20.0" },
