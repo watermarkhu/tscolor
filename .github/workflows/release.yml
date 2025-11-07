@@ -151,13 +151,48 @@ jobs:
     name: Deploy documentation
     needs: [release]
     if: github.event.pull_request.merged
-    uses: ./.github/workflows/docs.yml
     permissions:
       contents: write
-    secrets: inherit
-    with:
-      version: ${{ needs.release.outputs.next-tag || needs.release.outputs.last-tag }}
-      alias: latest
-      set-default: true
-      ref: ${{ needs.release.outputs.next-tag }}
-      push: true
+    env:
+      VERSION: ${{ needs.release.outputs.next-tag || needs.release.outputs.last-tag }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # Required to push to the documentation branch
+          ref: ${{ env.VERSION }}
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+  
+      - name: Sync dependencies
+        run: |
+          uv sync --no-dev --group docs
+
+      - name: Configure Git Credentials
+        run: |
+          git config --global user.name github-actions[bot]
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+  
+      - name: Build documentation with mike
+        shell: bash
+        run: |
+          if [[ $VERSION =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            PATCHED="v${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.*"
+            echo "Patching version "$VERSION" to $PATCHED"
+          fi
+          uv run mike deploy --push \
+            --update-aliases \
+            --branch gh-pages \
+            --alias-type symlink \
+            "${PATCHED}" "latest"
+      
+      - name: Set default alias for mike 
+        run: >
+          uv run mike set-default 
+          --push
+          --branch gh-pages
+          latest
