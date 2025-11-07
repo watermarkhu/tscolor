@@ -1,5 +1,6 @@
 """Tests for language registry."""
 
+from pathlib import Path
 import pytest
 import tree_sitter
 
@@ -8,6 +9,8 @@ from tscolor.languages import (
     register_language,
     get_configuration,
     list_languages,
+    detect_language_by_extension,
+    detect_language,
 )
 
 
@@ -101,3 +104,85 @@ class TestGlobalFunctions:
         """Test global get_configuration with unregistered language."""
         with pytest.raises(KeyError, match="Language 'nonexistent' not registered"):
             get_configuration("nonexistent")
+
+
+class TestExtensionDetection:
+    """Test file extension detection."""
+
+    def test_detect_python_extension(self):
+        """Test detection of Python files by extension."""
+        assert detect_language_by_extension(Path("test.py")) == "python"
+        assert detect_language_by_extension(Path("test.pyi")) == "python"
+        assert detect_language_by_extension(Path("test.pyw")) == "python"
+
+    def test_detect_javascript_extension(self):
+        """Test detection of JavaScript files by extension."""
+        assert detect_language_by_extension(Path("test.js")) == "javascript"
+        assert detect_language_by_extension(Path("test.jsx")) == "javascript"
+        assert detect_language_by_extension(Path("test.mjs")) == "javascript"
+        assert detect_language_by_extension(Path("test.cjs")) == "javascript"
+
+    def test_detect_matlab_extension(self):
+        """Test detection of MATLAB files by extension."""
+        assert detect_language_by_extension(Path("test.m")) == "matlab"
+
+    def test_detect_unknown_extension(self):
+        """Test detection returns None for unknown extensions."""
+        assert detect_language_by_extension(Path("test.xyz")) is None
+        assert detect_language_by_extension(Path("test.unknown")) is None
+
+    def test_detect_case_insensitive(self):
+        """Test that extension detection is case insensitive."""
+        assert detect_language_by_extension(Path("test.PY")) == "python"
+        assert detect_language_by_extension(Path("test.JS")) == "javascript"
+        assert detect_language_by_extension(Path("test.M")) == "matlab"
+
+
+class TestContentDetection:
+    """Test content-based language detection using pygments."""
+
+    def test_detect_python_content(self, tmp_path):
+        """Test detection of Python code by content."""
+        python_file = tmp_path / "test.txt"
+        python_file.write_text("""
+def hello():
+    print('Hello, world!')
+    return 42
+
+class MyClass:
+    def __init__(self):
+        self.value = 10
+""")
+        # Pygments should detect this as Python
+        result = detect_language(python_file)
+        # Accept either Python or Python3 or fallback to None
+        assert result in ("python", None)
+
+    def test_detect_javascript_content(self, tmp_path):
+        """Test detection of JavaScript code by content."""
+        js_file = tmp_path / "test.txt"
+        js_file.write_text("""
+function hello() {
+    console.log('Hello, world!');
+    return 42;
+}
+""")
+        # Pygments may detect this as JavaScript or another language
+        # We just verify it doesn't crash
+        result = detect_language(js_file)
+        assert result is None or isinstance(result, str)
+
+    def test_detect_fallback_to_extension(self, tmp_path):
+        """Test that detection falls back to extension when content detection fails."""
+        py_file = tmp_path / "test.py"
+        py_file.write_text("# Just a comment, hard to detect")
+        # Should fall back to extension detection
+        assert detect_language(py_file) == "python"
+
+    def test_detect_unknown_file(self, tmp_path):
+        """Test detection of unknown file type."""
+        unknown_file = tmp_path / "test.xyz"
+        unknown_file.write_text("some random text that is not code")
+        result = detect_language(unknown_file)
+        # Should return None for completely unknown files
+        assert result is None

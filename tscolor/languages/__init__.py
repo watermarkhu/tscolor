@@ -1,10 +1,29 @@
 """Language support for tree-sitter highlighting."""
 
+import json
 from pathlib import Path
 from typing import Dict, Optional
 import tree_sitter
+from pygments.lexers import guess_lexer
+from pygments.util import ClassNotFound
 
 from ..configuration import HighlightConfiguration
+
+# Mapping from pygments lexer names to tree-sitter language names
+# Only for languages we currently support
+PYGMENTS_TO_TSCOLOR: Dict[str, str] = {
+    "Python": "python",
+    "Python3": "python",
+    "JavaScript": "javascript",
+    "Matlab": "matlab",
+}
+
+# Map of language names to package names (only supported languages)
+LANGUAGE_PACKAGES: Dict[str, str] = {
+    "python": "tree_sitter_python",
+    "javascript": "tree_sitter_javascript",
+    "matlab": "tree_sitter_matlab",
+}
 
 
 class LanguageRegistry:
@@ -25,6 +44,8 @@ class LanguageRegistry:
             languages_dir = Path(__file__).parent
         self.languages_dir = languages_dir
         self._languages: Dict[str, tree_sitter.Language] = {}
+        self._file_extensions: Dict[str, str] = {}  # extension -> language name
+        self._load_file_extensions()
 
     def register_language(
         self,
@@ -80,6 +101,92 @@ class LanguageRegistry:
         """
         return list(self._languages.keys())
 
+    def _load_file_extensions(self) -> None:
+        """Load file extensions from tree-sitter.json files."""
+        for lang_dir in self.languages_dir.iterdir():
+            if not lang_dir.is_dir():
+                continue
+
+            tree_sitter_json = lang_dir / "tree-sitter.json"
+            if not tree_sitter_json.exists():
+                continue
+
+            try:
+                with tree_sitter_json.open() as f:
+                    config = json.load(f)
+                    file_types = config.get("file-types", [])
+                    lang_name = lang_dir.name
+
+                    # Map each extension to the language name
+                    for ext in file_types:
+                        # Store with leading dot for consistency
+                        ext_with_dot = f".{ext}" if not ext.startswith(".") else ext
+                        self._file_extensions[ext_with_dot] = lang_name
+            except (json.JSONDecodeError, OSError):
+                # Skip languages with invalid or unreadable config
+                continue
+
+    def detect_language_by_extension(self, file_path: Path) -> Optional[str]:
+        """Detect language from file extension.
+
+        Args:
+            file_path: Path to the file
+
+        Returns:
+            Language name or None if not detected
+        """
+        extension = file_path.suffix.lower()
+        return self._file_extensions.get(extension)
+
+    def detect_language(self, file_path: Path) -> Optional[str]:
+        """Detect language from file content using pygments, with fallback to extension.
+
+        Args:
+            file_path: Path to the file
+
+        Returns:
+            Language name or None if not detected
+        """
+        # First try pygments for supported languages (python, javascript, matlab)
+        try:
+            content = file_path.read_text(errors="ignore")
+            lexer = guess_lexer(content)
+            lexer_name = lexer.name
+
+            # Map pygments lexer name to tree-sitter language name
+            lang = PYGMENTS_TO_TSCOLOR.get(lexer_name)
+            if lang:
+                return lang
+        except (ClassNotFound, Exception):
+            # If pygments fails, continue to extension-based detection
+            pass
+
+        # Fallback to file extension detection
+        return self.detect_language_by_extension(file_path)
+
+    def load_language_parser(self, language: str) -> bool:
+        """Dynamically load and register a language parser.
+
+        Args:
+            language: Language name
+
+        Returns:
+            True if successful, False otherwise
+        """
+        package_name = LANGUAGE_PACKAGES.get(language)
+        if not package_name:
+            return False
+
+        try:
+            # Dynamically import the language module
+            module = __import__(package_name, fromlist=["language"])
+            lang_capsule = module.language()  # type: ignore[attr-defined]
+            # Register will handle wrapping the capsule in Language
+            self.register_language(language, lang_capsule)
+            return True
+        except ImportError:
+            return False
+
 
 # Global language registry
 _default_registry = LanguageRegistry()
@@ -117,3 +224,39 @@ def list_languages() -> list:
         List of language names
     """
     return _default_registry.list_languages()
+
+
+def detect_language_by_extension(file_path: Path) -> Optional[str]:
+    """Detect language by file extension using the default registry.
+
+    Args:
+        file_path: Path to the file
+
+    Returns:
+        Language name or None if not detected
+    """
+    return _default_registry.detect_language_by_extension(file_path)
+
+
+def detect_language(file_path: Path) -> Optional[str]:
+    """Detect language from file content using the default registry.
+
+    Args:
+        file_path: Path to the file
+
+    Returns:
+        Language name or None if not detected
+    """
+    return _default_registry.detect_language(file_path)
+
+
+def load_language_parser(language: str) -> bool:
+    """Dynamically load and register a language parser using the default registry.
+
+    Args:
+        language: Language name
+
+    Returns:
+        True if successful, False otherwise
+    """
+    return _default_registry.load_language_parser(language)

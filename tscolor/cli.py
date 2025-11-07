@@ -2,108 +2,13 @@
 
 import sys
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import click
 
 from . import Highlighter, __version__, get_theme, list_themes
 from .formatters import AnsiFormatter, HtmlFormatter
-from .languages import get_configuration, register_language
-
-# Language mapping from file extension to language name
-LANGUAGE_EXTENSIONS: Dict[str, str] = {
-    ".py": "python",
-    ".js": "javascript",
-    ".jsx": "javascript",
-    ".ts": "typescript",
-    ".tsx": "typescript",
-    ".rs": "rust",
-    ".go": "go",
-    ".c": "c",
-    ".cpp": "cpp",
-    ".cc": "cpp",
-    ".cxx": "cpp",
-    ".h": "c",
-    ".hpp": "cpp",
-    ".java": "java",
-    ".rb": "ruby",
-    ".php": "php",
-    ".swift": "swift",
-    ".kt": "kotlin",
-    ".scala": "scala",
-    ".html": "html",
-    ".xml": "xml",
-    ".json": "json",
-    ".yaml": "yaml",
-    ".yml": "yaml",
-    ".toml": "toml",
-    ".css": "css",
-    ".scss": "scss",
-    ".sass": "sass",
-    ".md": "markdown",
-    ".sh": "bash",
-    ".bash": "bash",
-    ".zsh": "bash",
-}
-
-
-def detect_language(file_path: Path) -> Optional[str]:
-    """Detect language from file extension.
-
-    Args:
-        file_path: Path to the file
-
-    Returns:
-        Language name or None if not detected
-    """
-    extension = file_path.suffix.lower()
-    return LANGUAGE_EXTENSIONS.get(extension)
-
-
-def load_language_parser(language: str) -> bool:
-    """Dynamically load and register a language parser.
-
-    Args:
-        language: Language name
-
-    Returns:
-        True if successful, False otherwise
-    """
-    # Map of language names to package names
-    package_map = {
-        "python": "tree_sitter_python",
-        "javascript": "tree_sitter_javascript",
-        "typescript": "tree_sitter_typescript",
-        "rust": "tree_sitter_rust",
-        "go": "tree_sitter_go",
-        "c": "tree_sitter_c",
-        "cpp": "tree_sitter_cpp",
-        "java": "tree_sitter_java",
-        "ruby": "tree_sitter_ruby",
-        "php": "tree_sitter_php",
-        "swift": "tree_sitter_swift",
-        "kotlin": "tree_sitter_kotlin",
-        "scala": "tree_sitter_scala",
-        "html": "tree_sitter_html",
-        "css": "tree_sitter_css",
-        "json": "tree_sitter_json",
-        "bash": "tree_sitter_bash",
-        "matlab": "tree_sitter_matlab",
-    }
-
-    package_name = package_map.get(language)
-    if not package_name:
-        return False
-
-    try:
-        # Dynamically import the language module
-        module = __import__(package_name, fromlist=["language"])
-        lang_capsule = module.language()  # type: ignore[attr-defined]
-        # Register will handle wrapping the capsule in Language
-        register_language(language, lang_capsule)
-        return True
-    except ImportError:
-        return False
+from .languages import detect_language, get_configuration, load_language_parser
 
 
 @click.command(
