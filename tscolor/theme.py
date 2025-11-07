@@ -1,6 +1,6 @@
 """Theme definitions for syntax highlighting."""
 
-from typing import Dict, Optional, Tuple, List, Literal
+from typing import Literal
 from pathlib import Path
 import yaml
 
@@ -30,15 +30,15 @@ class Theme:
     def __init__(
         self,
         name: str,
-        colors: Dict[str, str],
+        colors: dict[str, str],
         category: ThemeCategory = "dark",
         foreground: str = "#f8f8f2",
-        background: Optional[str] = None,
-        selection: Optional[str] = None,
-        comment: Optional[str] = None,
-        author: Optional[str] = None,
-        description: Optional[str] = None,
-        url: Optional[str] = None,
+        background: str | None = None,
+        selection: str | None = None,
+        comment: str | None = None,
+        author: str | None = None,
+        description: str | None = None,
+        url: str | None = None,
     ):
         """Initialize a theme.
 
@@ -81,7 +81,7 @@ class Theme:
         """
         return self.colors.get(capture_name, self.foreground)
 
-    def hex_to_rgb(self, hex_color: str) -> Tuple[int, int, int]:
+    def hex_to_rgb(self, hex_color: str) -> tuple[int, int, int]:
         """Convert hex color to RGB tuple.
 
         Args:
@@ -177,7 +177,7 @@ class Theme:
 
 
 # Theme registry
-_THEMES: Dict[str, Theme] = {}
+_THEMES: dict[str, Theme] = {}
 _themes_loaded = False
 
 
@@ -234,7 +234,7 @@ def get_theme(name: str) -> Theme:
     return _THEMES[theme_name]
 
 
-def list_themes(category: Optional[ThemeCategory] = None) -> List[str]:
+def list_themes(category: ThemeCategory | None = None) -> list[str]:
     """List all available themes.
 
     Args:
@@ -279,7 +279,7 @@ def register_theme(theme: Theme) -> None:
 THEMES = _THEMES
 
 
-def get_theme_info(name: str) -> Dict[str, Optional[str]]:
+def get_theme_info(name: str) -> dict[str, str | None]:
     """Get information about a theme.
 
     Args:

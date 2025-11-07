@@ -1,7 +1,7 @@
 """Highlight layer management for multi-language support."""
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Iterator
 import tree_sitter
 
 from .configuration import HighlightConfiguration
@@ -36,12 +36,12 @@ class SortableEvent:
         range: Full byte range (start, end) for deduplication
     """
 
-    sort_key: Tuple[int, int, int] = field(compare=True)
+    sort_key: tuple[int, int, int] = field(compare=True)
     event_type: str = field(compare=False)
     position: int = field(compare=False)
     highlight_index: int = field(compare=False)
     depth: int = field(compare=False)
-    range: Tuple[int, int] = field(compare=False)
+    range: tuple[int, int] = field(compare=False)
 
 
 class HighlightLayer:
@@ -64,7 +64,7 @@ class HighlightLayer:
         config: HighlightConfiguration,
         tree: tree_sitter.Tree,
         depth: int = 0,
-        ranges: Optional[List[Tuple[int, int]]] = None,
+        ranges: list[tuple[int, int]] | None = None,
     ):
         """Initialize a highlight layer.
 
@@ -79,7 +79,7 @@ class HighlightLayer:
         self.depth = depth
         self.ranges = ranges or [(0, tree.root_node.end_byte)]
         self.scope_stack = ScopeStack()
-        self._highlight_end_stack: List[int] = []
+        self._highlight_end_stack: list[int] = []
 
     def extract_highlights(self) -> Iterator[CaptureData]:
         """Extract highlight captures from this layer.
@@ -168,7 +168,7 @@ class HighlightLayer:
 
     def resolve_local_reference(
         self, node: tree_sitter.Node, capture_name: str
-    ) -> Optional[int]:
+    ) -> int | None:
         """Resolve a local variable reference to a highlight index.
 
         Args:
@@ -191,7 +191,7 @@ class HighlightLayer:
 
         return None
 
-    def sort_key(self, position: int, is_end: bool) -> Tuple[int, int, int]:
+    def sort_key(self, position: int, is_end: bool) -> tuple[int, int, int]:
         """Generate a sort key for an event.
 
         Args:

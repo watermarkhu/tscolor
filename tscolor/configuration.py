@@ -1,7 +1,6 @@
 """Configuration for syntax highlighting."""
 
 from pathlib import Path
-from typing import List, Optional, Dict
 import tree_sitter
 
 
@@ -59,9 +58,9 @@ class HighlightConfiguration:
         self,
         language: tree_sitter.Language,
         highlights_query: str,
-        injections_query: Optional[str] = None,
-        locals_query: Optional[str] = None,
-        highlight_names: Optional[List[str]] = None,
+        injections_query: str | None = None,
+        locals_query: str | None = None,
+        highlight_names: list[str] | None = None,
     ):
         """Initialize a highlight configuration.
 
@@ -127,14 +126,14 @@ class HighlightConfiguration:
             self.highlight_names = highlight_names
 
         # Build capture name to index mapping
-        self.capture_index_map: Dict[str, int] = {
+        self.capture_index_map: dict[str, int] = {
             name: idx for idx, name in enumerate(self.highlight_names)
         }
 
         # Track patterns that shouldn't match local variables
         self.non_local_variable_patterns = set()
 
-    def _extract_capture_names(self) -> List[str]:
+    def _extract_capture_names(self) -> list[str]:
         """Extract unique capture names from all queries.
 
         Returns the complete DEFAULT_HIGHLIGHT_NAMES list to match the

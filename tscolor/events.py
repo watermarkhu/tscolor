@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Union
 
 
 class EventType(Enum):
@@ -45,4 +44,4 @@ class HighlightEndEvent:
 
 
 # Type alias for any highlight event
-HighlightEvent = Union[SourceEvent, HighlightStartEvent, HighlightEndEvent]
+HighlightEvent = SourceEvent | HighlightStartEvent | HighlightEndEvent

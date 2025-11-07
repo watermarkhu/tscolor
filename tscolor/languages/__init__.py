@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Optional
 import tree_sitter
 from pygments.lexers import guess_lexer
 from pygments.util import ClassNotFound
@@ -11,7 +10,7 @@ from ..configuration import HighlightConfiguration
 
 # Mapping from pygments lexer names to tree-sitter language names
 # Only for languages we currently support
-PYGMENTS_TO_TSCOLOR: Dict[str, str] = {
+PYGMENTS_TO_TSCOLOR: dict[str, str] = {
     "Python": "python",
     "Python3": "python",
     "JavaScript": "javascript",
@@ -19,7 +18,7 @@ PYGMENTS_TO_TSCOLOR: Dict[str, str] = {
 }
 
 # Map of language names to package names (only supported languages)
-LANGUAGE_PACKAGES: Dict[str, str] = {
+LANGUAGE_PACKAGES: dict[str, str] = {
     "python": "tree_sitter_python",
     "javascript": "tree_sitter_javascript",
     "matlab": "tree_sitter_matlab",
@@ -33,7 +32,7 @@ class LanguageRegistry:
     query files (highlights.scm, injections.scm, locals.scm).
     """
 
-    def __init__(self, languages_dir: Optional[Path] = None):
+    def __init__(self, languages_dir: Path | None = None):
         """Initialize the language registry.
 
         Args:
@@ -43,8 +42,8 @@ class LanguageRegistry:
         if languages_dir is None:
             languages_dir = Path(__file__).parent
         self.languages_dir = languages_dir
-        self._languages: Dict[str, tree_sitter.Language] = {}
-        self._file_extensions: Dict[str, str] = {}  # extension -> language name
+        self._languages: dict[str, tree_sitter.Language] = {}
+        self._file_extensions: dict[str, str] = {}  # extension -> language name
         self._load_file_extensions()
 
     def register_language(
@@ -126,7 +125,7 @@ class LanguageRegistry:
                 # Skip languages with invalid or unreadable config
                 continue
 
-    def detect_language_by_extension(self, file_path: Path) -> Optional[str]:
+    def detect_language_by_extension(self, file_path: Path) -> str | None:
         """Detect language from file extension.
 
         Args:
@@ -138,7 +137,7 @@ class LanguageRegistry:
         extension = file_path.suffix.lower()
         return self._file_extensions.get(extension)
 
-    def detect_language(self, file_path: Path) -> Optional[str]:
+    def detect_language(self, file_path: Path) -> str | None:
         """Detect language from file content using pygments, with fallback to extension.
 
         Args:
@@ -226,7 +225,7 @@ def list_languages() -> list:
     return _default_registry.list_languages()
 
 
-def detect_language_by_extension(file_path: Path) -> Optional[str]:
+def detect_language_by_extension(file_path: Path) -> str | None:
     """Detect language by file extension using the default registry.
 
     Args:
@@ -238,7 +237,7 @@ def detect_language_by_extension(file_path: Path) -> Optional[str]:
     return _default_registry.detect_language_by_extension(file_path)
 
 
-def detect_language(file_path: Path) -> Optional[str]:
+def detect_language(file_path: Path) -> str | None:
     """Detect language from file content using the default registry.
 
     Args:

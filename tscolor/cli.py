@@ -2,7 +2,6 @@
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -70,10 +69,10 @@ Examples:
     help="List all available themes",
 )
 def main(
-    file: Optional[Path],
-    language: Optional[str],
+    file: Path | None,
+    language: str | None,
     theme: str,
-    output: Optional[Path],
+    output: Path | None,
     background: bool,
     list_themes_flag: bool,
 ) -> None:
@@ -140,9 +139,9 @@ def show_themes() -> None:
 
 def highlight_file(
     file_path: Path,
-    language: Optional[str] = None,
+    language: str | None = None,
     theme_name: str = "dracula",
-    output: Optional[Path] = None,
+    output: Path | None = None,
     background: bool = False,
 ) -> int:
     """Highlight a source file and print to terminal or save as HTML.

@@ -1,7 +1,6 @@
 """Local scope tracking for variable highlighting."""
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
 
 
 @dataclass
@@ -15,8 +14,8 @@ class LocalDefinition:
     """
 
     name: str
-    value_range: Tuple[int, int]
-    highlight_index: Optional[int] = None
+    value_range: tuple[int, int]
+    highlight_index: int | None = None
 
 
 @dataclass
@@ -30,10 +29,10 @@ class LocalScope:
     """
 
     inherits: bool
-    range: Tuple[int, int]
-    definitions: List[LocalDefinition]
+    range: tuple[int, int]
+    definitions: list[LocalDefinition]
 
-    def __init__(self, inherits: bool, range: Tuple[int, int]):
+    def __init__(self, inherits: bool, range: tuple[int, int]):
         """Initialize a local scope.
 
         Args:
@@ -45,7 +44,7 @@ class LocalScope:
         self.definitions = []
 
     def add_definition(
-        self, name: str, value_range: Tuple[int, int]
+        self, name: str, value_range: tuple[int, int]
     ) -> LocalDefinition:
         """Add a variable definition to this scope.
 
@@ -60,7 +59,7 @@ class LocalScope:
         self.definitions.append(definition)
         return definition
 
-    def find_definition(self, name: str, position: int) -> Optional[LocalDefinition]:
+    def find_definition(self, name: str, position: int) -> LocalDefinition | None:
         """Find a variable definition in this scope.
 
         Args:
@@ -86,7 +85,7 @@ class ScopeStack:
 
     def __init__(self):
         """Initialize an empty scope stack."""
-        self.scopes: List[LocalScope] = []
+        self.scopes: list[LocalScope] = []
 
     def push(self, scope: LocalScope) -> None:
         """Push a new scope onto the stack.
@@ -96,7 +95,7 @@ class ScopeStack:
         """
         self.scopes.append(scope)
 
-    def pop(self) -> Optional[LocalScope]:
+    def pop(self) -> LocalScope | None:
         """Pop the top scope from the stack.
 
         Returns:
@@ -106,7 +105,7 @@ class ScopeStack:
             return self.scopes.pop()
         return None
 
-    def find_definition(self, name: str, position: int) -> Optional[LocalDefinition]:
+    def find_definition(self, name: str, position: int) -> LocalDefinition | None:
         """Find a variable definition by searching the scope stack.
 
         Searches from the top of the stack (innermost scope) to the bottom,

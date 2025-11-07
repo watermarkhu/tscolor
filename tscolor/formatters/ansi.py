@@ -1,6 +1,6 @@
 """ANSI color formatter for terminal output."""
 
-from typing import Iterator, List
+from collections.abc import Iterator
 from ..events import HighlightEvent, SourceEvent, HighlightStartEvent, HighlightEndEvent
 from ..theme import Theme
 from ..configuration import HighlightConfiguration
@@ -43,7 +43,7 @@ class AnsiFormatter:
             ANSI-colored string
         """
         output = []
-        highlight_stack: List[int] = []
+        highlight_stack: list[int] = []
 
         for event in events:
             if isinstance(event, SourceEvent):

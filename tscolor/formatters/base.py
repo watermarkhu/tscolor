@@ -1,6 +1,7 @@
 """Base formatter protocol and classes."""
 
-from typing import Protocol, Iterator, runtime_checkable
+from collections.abc import Iterator
+from typing import Protocol, runtime_checkable
 
 from ..configuration import HighlightConfiguration
 from ..events import HighlightEvent

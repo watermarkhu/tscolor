@@ -1,6 +1,6 @@
 """Enhanced syntax highlighting engine with multi-layer support."""
 
-from typing import Iterator, Optional, Callable, Dict, Set, Tuple, List
+from collections.abc import Callable, Iterator
 import tree_sitter
 
 from .configuration import HighlightConfiguration
@@ -29,11 +29,11 @@ class Highlighter:
     def __init__(self) -> None:
         """Initialize a new highlighter instance."""
         self.parser = tree_sitter.Parser()
-        self._injection_configs: Dict[str, HighlightConfiguration] = {}
+        self._injection_configs: dict[str, HighlightConfiguration] = {}
 
     def _resolve_highlight_index(
-        self, capture_name: str, capture_index_map: Dict[str, int]
-    ) -> Optional[int]:
+        self, capture_name: str, capture_index_map: dict[str, int]
+    ) -> int | None:
         """Resolve a capture name to a highlight index with hierarchical fallback.
 
         Implements hierarchical matching like tree-sitter-highlight:
@@ -77,7 +77,7 @@ class Highlighter:
         self,
         config: HighlightConfiguration,
         source: bytes,
-        cancellation_flag: Optional[Callable[[], bool]] = None,
+        cancellation_flag: Callable[[], bool] | None = None,
     ) -> Iterator[HighlightEvent]:
         """Highlight source code and yield highlight events.
 
@@ -118,7 +118,7 @@ class Highlighter:
         tree: tree_sitter.Tree,
         source: bytes,
         depth: int,
-    ) -> List[HighlightLayer]:
+    ) -> list[HighlightLayer]:
         """Extract language injection layers.
 
         Args:
@@ -140,7 +140,7 @@ class Highlighter:
         matches = cursor.matches(tree.root_node)
 
         # Group captures by language
-        language_ranges: Dict[str, List[Tuple[int, int]]] = {}
+        language_ranges: dict[str, list[tuple[int, int]]] = {}
 
         # Convert matches to (node, capture_name) tuples and process
         for pattern_index, captures_dict in matches:
@@ -190,8 +190,8 @@ class Highlighter:
         return layers
 
     def _collect_events_from_layers(
-        self, layers: List[HighlightLayer], source: bytes
-    ) -> List[SortableEvent]:
+        self, layers: list[HighlightLayer], source: bytes
+    ) -> list[SortableEvent]:
         """Collect and sort events from all layers.
 
         Args:
@@ -206,7 +206,7 @@ class Highlighter:
         for layer in layers:
             # First, collect all captures and deduplicate by node position
             # When multiple captures match the same node, keep the one with highest pattern_index
-            node_captures: Dict[Tuple[int, int], Tuple[CaptureData, int]] = {}
+            node_captures: dict[tuple[int, int], tuple[CaptureData, int]] = {}
 
             for capture_data in layer.extract_highlights():
                 node = capture_data.node
@@ -277,9 +277,9 @@ class Highlighter:
     def _emit_events(
         self,
         source: bytes,
-        sorted_events: List[SortableEvent],
-        cancellation_flag: Optional[Callable[[], bool]],
-        byte_range: Optional[Tuple[int, int]] = None,
+        sorted_events: list[SortableEvent],
+        cancellation_flag: Callable[[], bool] | None,
+        byte_range: tuple[int, int] | None = None,
     ) -> Iterator[HighlightEvent]:
         """Emit highlight events, handling overlaps and deduplication.
 
@@ -302,8 +302,8 @@ class Highlighter:
             return
 
         current_pos = start_byte
-        active_highlights: List[Tuple[int, int, int]] = []  # (end, index, depth)
-        seen_ranges: Set[Tuple[int, int, int]] = set()  # (start, end, depth)
+        active_highlights: list[tuple[int, int, int]] = []  # (end, index, depth)
+        seen_ranges: set[tuple[int, int, int]] = set()  # (start, end, depth)
 
         for event in sorted_events:
             if cancellation_flag and cancellation_flag():
@@ -352,7 +352,7 @@ class Highlighter:
         config: HighlightConfiguration,
         node: tree_sitter.Node,
         source: bytes,
-        cancellation_flag: Optional[Callable[[], bool]] = None,
+        cancellation_flag: Callable[[], bool] | None = None,
     ) -> Iterator[HighlightEvent]:
         """Highlight a specific tree-sitter node.
 
