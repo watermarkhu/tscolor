@@ -22,7 +22,7 @@ concurrency:
 jobs:
   docs:
     name: Test deploy documentation
-    uses: ./.github/workflows/docs.yaml
+    uses: ./.github/workflows/docs.yml
     permissions: 
       contents: write
     secrets: inherit

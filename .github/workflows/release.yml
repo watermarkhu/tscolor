@@ -151,7 +151,7 @@ jobs:
     name: Deploy documentation
     needs: [release]
     if: github.event.pull_request.merged
-    uses: ./.github/workflows/docs.yaml
+    uses: ./.github/workflows/docs.yml
     permissions:
       contents: write
     secrets: inherit
