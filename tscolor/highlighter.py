@@ -351,7 +351,7 @@ class Highlighter:
         self,
         config: HighlightConfiguration,
         node: tree_sitter.Node,
-        source: bytes,
+        tree: tree_sitter.Tree,
         cancellation_flag: Callable[[], bool] | None = None,
     ) -> Iterator[HighlightEvent]:
         """Highlight a specific tree-sitter node.
@@ -363,7 +363,7 @@ class Highlighter:
         Args:
             config: Highlight configuration for the language
             node: Tree-sitter node to highlight
-            source: Source code bytes (must contain the node's text)
+            tree: Tree-sitter tree containing the node
             cancellation_flag: Optional callable that returns True to cancel
 
         Yields:
@@ -378,7 +378,7 @@ class Highlighter:
             >>> # Highlight just that node
             >>> highlighter = Highlighter()
             >>> config = get_configuration("python")
-            >>> events = highlighter.highlight_node(config, func_node, b"def hello(): pass")
+            >>> events = highlighter.highlight_node(config, func_node, tree")
         """
         # Create a layer for this specific node
         # We need to parse the source to get the tree, then use the node's
@@ -386,7 +386,6 @@ class Highlighter:
 
         # Set the parser language and parse the source
         self.parser.language = config.language
-        tree = self.parser.parse(source)
 
         start_byte = node.start_byte
         end_byte = node.end_byte
@@ -402,9 +401,9 @@ class Highlighter:
         layers = [layer]
 
         # Extract and sort all highlight events from all layers
-        events = self._collect_events_from_layers(layers, source)
+        events = self._collect_events_from_layers(layers, tree.root_node.text)
 
         # Deduplicate and emit events within the node's byte range
         yield from self._emit_events(
-            source, events, cancellation_flag, byte_range=(start_byte, end_byte)
+            tree.root_node.text, events, cancellation_flag, byte_range=(start_byte, end_byte)
         )

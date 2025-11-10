@@ -199,7 +199,7 @@ class TestNodeHighlighting:
         func_node = tree.root_node.children[0]
 
         # Highlight just that node
-        events = list(highlighter.highlight_node(config, func_node, source))
+        events = list(highlighter.highlight_node(config, func_node, tree))
 
         # Should have some events
         assert len(events) > 0
@@ -225,7 +225,7 @@ class TestNodeHighlighting:
         second_stmt = tree.root_node.children[1]
 
         # Highlight just that node
-        events = list(highlighter.highlight_node(config, second_stmt, source))
+        events = list(highlighter.highlight_node(config, second_stmt, tree))
 
         # Collect all byte positions from events
         positions = set()
@@ -383,7 +383,7 @@ class TestEdgeCases:
         second_stmt = tree.root_node.children[1]
 
         # Use highlight_node which uses byte_range internally
-        events = list(highlighter.highlight_node(config, second_stmt, source))
+        events = list(highlighter.highlight_node(config, second_stmt, tree))
 
         # Should have events
         assert len(events) > 0
