@@ -1,0 +1,16 @@
+[package]
+name = "tscolor-test-helper"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "ts-highlight"
+path = "tests/integration/rust/main.rs"
+
+[dependencies]
+tree-sitter = "0.24"
+tree-sitter-highlight = "0.24"
+tree-sitter-python = "0.23"
+tree-sitter-javascript = "0.23"
+anyhow = "1.0"
+serde_json = "1.0"

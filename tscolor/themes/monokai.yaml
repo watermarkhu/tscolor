@@ -1,0 +1,92 @@
+name: Monokai
+category: dark
+author: Wimer Hazenberg
+description: The classic Monokai color scheme
+url: https://monokai.pro
+
+background: "#272822"
+foreground: "#f8f8f2"
+selection: "#49483e"
+comment: "#75715e"
+
+colors:
+  # Keywords and control flow
+  keyword: "#f92672"
+  keyword.control: "#f92672"
+  keyword.function: "#66d9ef"
+  keyword.operator: "#f92672"
+  keyword.return: "#f92672"
+  keyword.import: "#f92672"
+
+  # Functions and methods
+  function: "#a6e22e"
+  function.builtin: "#a6e22e"
+  function.method: "#a6e22e"
+  function.call: "#a6e22e"
+  method: "#a6e22e"
+  method.call: "#a6e22e"
+
+  # Types
+  type: "#66d9ef"
+  type.builtin: "#66d9ef"
+  class: "#a6e22e"
+  constructor: "#66d9ef"
+
+  # Constants and literals
+  constant: "#ae81ff"
+  constant.builtin: "#ae81ff"
+  number: "#ae81ff"
+  boolean: "#ae81ff"
+  float: "#ae81ff"
+  integer: "#ae81ff"
+
+  # Strings
+  string: "#e6db74"
+  string.escape: "#ae81ff"
+  character: "#e6db74"
+
+  # Comments
+  comment: "#75715e"
+  comment.line: "#75715e"
+  comment.block: "#75715e"
+
+  # Variables
+  variable: "#f8f8f2"
+  variable.builtin: "#f92672"
+  variable.parameter: "#fd971f"
+  parameter: "#fd971f"
+
+  # Operators
+  operator: "#f92672"
+
+  # Punctuation
+  punctuation: "#f8f8f2"
+  punctuation.bracket: "#f8f8f2"
+  punctuation.delimiter: "#f8f8f2"
+
+  # Properties and attributes
+  property: "#f8f8f2"
+  attribute: "#a6e22e"
+
+  # Tags (HTML, XML, etc.)
+  tag: "#f92672"
+  tag.attribute: "#a6e22e"
+
+  # Markup
+  markup.heading: "#66d9ef"
+  markup.bold: "#f92672"
+  markup.italic: "#66d9ef"
+  markup.link: "#66d9ef"
+  markup.quote: "#e6db74"
+  markup.list: "#a6e22e"
+
+  # Special
+  module: "#f8f8f2"
+  namespace: "#f8f8f2"
+  label: "#66d9ef"
+  annotation: "#e6db74"
+  decorator: "#a6e22e"
+
+  # Errors and warnings
+  error: "#f92672"
+  warning: "#fd971f"

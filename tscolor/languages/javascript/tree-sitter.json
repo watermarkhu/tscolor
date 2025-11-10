@@ -1,0 +1,6 @@
+{
+  "scope": "source.js",
+  "file-types": ["js", "jsx", "mjs", "cjs"],
+  "injection-regex": "^(js|javascript)$",
+  "highlights": "highlights.scm"
+}

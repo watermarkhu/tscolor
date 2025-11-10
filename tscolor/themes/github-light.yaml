@@ -1,0 +1,92 @@
+name: github-light
+category: light
+author: GitHub
+description: GitHub's light color scheme for syntax highlighting
+url: https://github.com
+
+background: "#ffffff"
+foreground: "#24292f"
+selection: "#0969da"
+comment: "#6e7781"
+
+colors:
+  # Keywords and control flow
+  keyword: "#cf222e"
+  keyword.control: "#cf222e"
+  keyword.function: "#8250df"
+  keyword.operator: "#cf222e"
+  keyword.return: "#cf222e"
+  keyword.import: "#cf222e"
+
+  # Functions and methods
+  function: "#8250df"
+  function.builtin: "#8250df"
+  function.method: "#8250df"
+  function.call: "#8250df"
+  method: "#8250df"
+  method.call: "#8250df"
+
+  # Types
+  type: "#953800"
+  type.builtin: "#953800"
+  class: "#953800"
+  constructor: "#953800"
+
+  # Constants and literals
+  constant: "#0550ae"
+  constant.builtin: "#0550ae"
+  number: "#0550ae"
+  boolean: "#0550ae"
+  float: "#0550ae"
+  integer: "#0550ae"
+
+  # Strings
+  string: "#0a3069"
+  string.escape: "#cf222e"
+  character: "#0a3069"
+
+  # Comments
+  comment: "#6e7781"
+  comment.line: "#6e7781"
+  comment.block: "#6e7781"
+
+  # Variables
+  variable: "#24292f"
+  variable.builtin: "#953800"
+  variable.parameter: "#953800"
+  parameter: "#953800"
+
+  # Operators
+  operator: "#cf222e"
+
+  # Punctuation
+  punctuation: "#24292f"
+  punctuation.bracket: "#24292f"
+  punctuation.delimiter: "#24292f"
+
+  # Properties and attributes
+  property: "#24292f"
+  attribute: "#116329"
+
+  # Tags (HTML, XML, etc.)
+  tag: "#116329"
+  tag.attribute: "#0550ae"
+
+  # Markup
+  markup.heading: "#0550ae"
+  markup.bold: "#24292f"
+  markup.italic: "#24292f"
+  markup.link: "#0969da"
+  markup.quote: "#24292f"
+  markup.list: "#953800"
+
+  # Special
+  module: "#24292f"
+  namespace: "#24292f"
+  label: "#953800"
+  annotation: "#953800"
+  decorator: "#8250df"
+
+  # Errors and warnings
+  error: "#cf222e"
+  warning: "#9a6700"
